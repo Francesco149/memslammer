@@ -1,0 +1,10 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11732' '-d' '300.0' '-s'
+     0.36 memslammer chain: 11731 MB, 24 threads, block 4096, passes 4, flush clflushopt, yield 1, ops 0xf
+    10.38 [     10.0s] cycles 24, coverage 100.0%, 28.24 GB/s, errors 0
+    20.48 [     20.1s] cycles 48, coverage 200.0%, 28.01 GB/s, errors 0
+    30.54 [     30.2s] cycles 96, coverage 400.0%, 56.29 GB/s, errors 0
+    40.59 [     40.2s] cycles 120, coverage 500.0%, 28.15 GB/s, errors 0
+    50.64 [     50.3s] cycles 144, coverage 600.0%, 28.13 GB/s, errors 0
+    52.39 [   52.025s] ERROR thread 0 cycle 6 (total 1)
+    52.43 [     52.1s] cycles 168, coverage 700.0%, 158.35 GB/s, errors 1
+    52.78 RESULT tester=memslammer errors=1 first_error_s=52.025 elapsed_s=52.419

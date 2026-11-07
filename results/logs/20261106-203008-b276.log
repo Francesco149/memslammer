@@ -1,0 +1,17 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11801' '-d' '300.0' '-s' '-M verify -C none -P random'
+     0.34 usage: memslammer [options]   (no options: test 90% of free RAM forever)
+     0.34   -h          show this help
+     0.34   -m MB       memory to test (default 90% of available)
+     0.34   -t N        threads (default: logical CPUs)
+     0.34   -M MODE     chain (default) or verify
+     0.35   -b BYTES    block size (default: chain 4096, verify 4 MiB)
+     0.35   -p N        chain: forward/reverse passes per cycle (default 4)
+     0.35   -d SECONDS  stop after this long (default: forever)
+     0.35   -o MASK     enabled ops bitmask: 1 add 2 sub 4 xor 8 not (default 15)
+     0.35   -F          chain: disable cache flushing
+     0.35   -r N        verify: compare passes per fill (default 200)
+     0.35   -P PATTERN  verify: toggle, mul (default) or random
+     0.35   -C POLICY   verify reads: nta (prefetchnta, default), flush (clflushopt
+     0.35               before each pass) or none
+     0.35   -Y          disable yield after each block
+     0.35   -s          stop on first error

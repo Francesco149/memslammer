@@ -1,0 +1,28 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11233' '-d' '900.0' '-s' '-M' 'verify'
+     0.41 memslammer verify: 11232 MB, 24 threads, block 4194304, rereads 200, pattern random, cache none, yield 1
+    10.48 [     10.1s] cycles 0, coverage 0.0%, 112.26 GB/s, errors 0
+    20.58 [     20.2s] cycles 0, coverage 0.0%, 111.43 GB/s, errors 0
+    30.66 [     30.2s] cycles 24, coverage 100.0%, 111.23 GB/s, errors 0
+    40.68 [     40.3s] cycles 24, coverage 100.0%, 111.36 GB/s, errors 0
+    50.77 [     50.3s] cycles 48, coverage 200.0%, 111.30 GB/s, errors 0
+    60.77 [     60.4s] cycles 48, coverage 200.0%, 110.72 GB/s, errors 0
+    70.88 [     70.4s] cycles 72, coverage 300.0%, 111.52 GB/s, errors 0
+    80.97 [     80.5s] cycles 72, coverage 300.0%, 110.91 GB/s, errors 0
+    91.01 [     90.6s] cycles 96, coverage 400.0%, 111.01 GB/s, errors 0
+   101.09 [    100.7s] cycles 96, coverage 400.0%, 111.28 GB/s, errors 0
+   111.09 [    110.7s] cycles 120, coverage 500.0%, 111.04 GB/s, errors 0
+   121.12 [    120.7s] cycles 120, coverage 500.0%, 111.28 GB/s, errors 0
+   131.16 [    130.7s] cycles 144, coverage 600.0%, 111.41 GB/s, errors 0
+   141.25 [    140.8s] cycles 144, coverage 600.0%, 111.60 GB/s, errors 0
+   151.29 [    150.9s] cycles 168, coverage 700.0%, 111.17 GB/s, errors 0
+   161.37 [    161.0s] cycles 168, coverage 700.0%, 111.25 GB/s, errors 0
+   171.48 [    171.1s] cycles 192, coverage 800.0%, 111.50 GB/s, errors 0
+   181.55 [    181.1s] cycles 192, coverage 800.0%, 110.81 GB/s, errors 0
+   191.61 [    191.2s] cycles 198, coverage 825.0%, 112.35 GB/s, errors 0
+   201.70 [    201.3s] cycles 216, coverage 900.0%, 110.65 GB/s, errors 0
+   211.79 [    211.4s] cycles 218, coverage 908.3%, 111.48 GB/s, errors 0
+   221.89 [    221.5s] cycles 240, coverage 1000.0%, 111.20 GB/s, errors 0
+   231.93 [    231.5s] cycles 240, coverage 1000.0%, 111.52 GB/s, errors 0
+   236.47 [  236.058s] ERROR thread 0 cycle 11 (total 1)
+   236.57 [    236.2s] cycles 264, coverage 1100.0%, 109.25 GB/s, errors 1
+   236.57 RESULT tester=memslammer errors=1 first_error_s=236.058 elapsed_s=236.152

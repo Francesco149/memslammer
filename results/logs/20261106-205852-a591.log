@@ -1,0 +1,22 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11640' '-d' '120.0' '-M' 'chain'
+     0.40 memslammer chain: 11640 MB, 24 threads, block 4096, passes 4, flush clflushopt, yield 1, ops 0xf
+    10.50 [     10.1s] cycles 24, coverage 100.0%, 27.79 GB/s, errors 0
+    20.57 [     20.2s] cycles 48, coverage 200.0%, 27.89 GB/s, errors 0
+    21.41 [   21.002s] ERROR thread 19 cycle 2 (total 1)
+    29.99 [   29.586s] ERROR thread 12 cycle 3 (total 2)
+    30.62 [     30.2s] cycles 91, coverage 379.2%, 50.04 GB/s, errors 2
+    40.67 [     40.3s] cycles 120, coverage 500.0%, 33.76 GB/s, errors 2
+    44.10 [   43.700s] ERROR thread 23 cycle 5 (total 3)
+    50.72 [     50.3s] cycles 156, coverage 650.0%, 41.90 GB/s, errors 3
+    60.77 [     60.4s] cycles 189, coverage 787.5%, 38.40 GB/s, errors 3
+    70.81 [     70.4s] cycles 218, coverage 908.3%, 33.79 GB/s, errors 3
+    80.86 [     80.5s] cycles 259, coverage 1079.2%, 47.70 GB/s, errors 3
+    90.90 [     90.5s] cycles 288, coverage 1200.0%, 33.79 GB/s, errors 3
+    92.98 [   92.576s] ERROR thread 15 cycle 12 (total 4)
+   100.95 [    100.5s] cycles 328, coverage 1366.7%, 46.56 GB/s, errors 4
+   104.21 [  103.807s] ERROR thread 5 cycle 13 (total 5)
+   104.60 [  104.200s] ERROR thread 0 cycle 13 (total 6)
+   111.01 [    110.6s] cycles 356, coverage 1483.3%, 32.57 GB/s, errors 6
+   111.35 [  110.945s] ERROR thread 5 cycle 14 (total 7)
+   120.49 [    120.1s] cycles 387, coverage 1612.5%, 38.24 GB/s, errors 7
+   120.97 RESULT tester=memslammer errors=7 first_error_s=21.002 elapsed_s=120.569

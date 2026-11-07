@@ -1,0 +1,9 @@
+# & 'C:\msbench\run_tm5.ps1' -Dir 'C:\msbench\tm5' -Config 'Absolut @ anta777.cfg' -Seconds 300.0
+     0.42 START tester=tm5 config=Absolut @ anta777.cfg
+     0.73 LOG t=0.3 
+     0.73 LOG t=0.3 -------- TestMem5 0.13.1 2026-11-06 20:33 --------
+     0.73 LOG t=0.3 0:00:00  Configuration: Absolut @ anta777
+     1.26 LOG t=0.9 0:00:00  Testing 512 MB x 24 (75%) out of 16293 MB
+    27.45 LOG t=27.0 0:00:26  Error in test 1
+    27.45 LOG t=27.0 0:00:26  Testing stopped
+    27.50 RESULT tester=tm5 errors=1 first_error_s=27.033 elapsed_s=27.106 outcome=stopped crashlog=False

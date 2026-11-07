@@ -1,0 +1,40 @@
+# & 'C:\msbench\karhu_drv.exe' 'C:\Users\headpats\Documents\_ostools\KarhuSoftware.RAMTest_1.0.0.1\x64\ramtest.dll' 11425 $env:NUMBER_OF_PROCESSORS 900.0
+     0.54 START tester=karhu mb=11425 threads=24
+    10.54 PROGRESS t=10.0 coverage=0.10 errors=0
+    20.56 PROGRESS t=20.0 coverage=0.21 errors=0
+    30.60 PROGRESS t=30.1 coverage=0.31 errors=0
+    40.63 PROGRESS t=40.1 coverage=0.42 errors=0
+    50.66 PROGRESS t=50.1 coverage=0.53 errors=0
+    60.68 PROGRESS t=60.1 coverage=0.63 errors=0
+    70.71 PROGRESS t=70.2 coverage=0.74 errors=0
+    80.73 PROGRESS t=80.2 coverage=0.85 errors=0
+    90.77 PROGRESS t=90.2 coverage=0.95 errors=0
+   100.78 PROGRESS t=100.3 coverage=1.06 errors=0
+   110.81 PROGRESS t=110.3 coverage=1.16 errors=0
+   120.83 PROGRESS t=120.3 coverage=1.27 errors=0
+   130.86 PROGRESS t=130.3 coverage=1.38 errors=0
+   140.88 PROGRESS t=140.3 coverage=1.49 errors=0
+   150.91 PROGRESS t=150.4 coverage=1.59 errors=0
+   160.94 PROGRESS t=160.4 coverage=1.70 errors=0
+   170.96 PROGRESS t=170.4 coverage=1.81 errors=0
+   180.99 PROGRESS t=180.5 coverage=1.91 errors=0
+   191.01 PROGRESS t=190.5 coverage=2.02 errors=0
+   201.04 PROGRESS t=200.5 coverage=2.13 errors=0
+   211.06 PROGRESS t=210.5 coverage=2.23 errors=0
+   221.09 PROGRESS t=220.6 coverage=2.34 errors=0
+   231.11 PROGRESS t=230.6 coverage=2.45 errors=0
+   241.14 PROGRESS t=240.6 coverage=2.56 errors=0
+   251.17 PROGRESS t=250.6 coverage=2.66 errors=0
+   261.18 PROGRESS t=260.6 coverage=2.77 errors=0
+   271.21 PROGRESS t=270.7 coverage=2.88 errors=0
+   281.23 PROGRESS t=280.7 coverage=2.98 errors=0
+   291.25 PROGRESS t=290.7 coverage=3.09 errors=0
+   301.28 PROGRESS t=300.7 coverage=3.20 errors=0
+   311.31 PROGRESS t=310.8 coverage=3.30 errors=0
+   321.32 PROGRESS t=320.8 coverage=3.41 errors=0
+   331.34 PROGRESS t=330.8 coverage=3.52 errors=0
+   341.37 PROGRESS t=340.8 coverage=3.62 errors=0
+   351.39 PROGRESS t=350.9 coverage=3.73 errors=0
+   361.41 PROGRESS t=360.9 coverage=3.84 errors=0
+   368.18 ERROR t=367.642 count=1
+   369.09 RESULT tester=karhu errors=1 first_error_s=367.642 elapsed_s=367.642 coverage=3.91

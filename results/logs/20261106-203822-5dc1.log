@@ -1,0 +1,6 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11765' '-d' '300.0' '-s' '-M' 'verify' '-C' 'flush' '-P' 'random'
+     0.35 memslammer verify: 11712 MB, 24 threads, block 4194304, rereads 200, pattern random, cache flush, yield 1
+    10.36 [     10.0s] cycles 0, coverage 0.0%, 34.87 GB/s, errors 0
+    15.52 [   15.169s] ERROR thread 11 cycle 0 (total 1)
+    15.54 [     15.2s] cycles 0, coverage 0.0%, 36.45 GB/s, errors 1
+    15.54 RESULT tester=memslammer errors=1 first_error_s=15.169 elapsed_s=15.191

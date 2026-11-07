@@ -1,0 +1,31 @@
+# & 'C:\msbench\memslammer.exe' '-m' '11634' '-d' '120.0' '-M' 'verify' '-C' 'flush' '-P' 'random'
+     0.44 memslammer verify: 11616 MB, 24 threads, block 4194304, rereads 200, pattern random, cache flush, yield 1
+    10.46 [     10.0s] cycles 0, coverage 0.0%, 34.93 GB/s, errors 0
+    11.91 [   11.462s] ERROR thread 6 cycle 0 (total 1)
+    20.48 [     20.0s] cycles 0, coverage 0.0%, 36.13 GB/s, errors 1
+    30.52 [     30.1s] cycles 0, coverage 0.0%, 35.91 GB/s, errors 1
+    31.65 [   31.202s] ERROR thread 1 cycle 0 (total 2)
+    31.76 [   31.311s] ERROR thread 2 cycle 0 (total 3)
+    34.71 [   34.250s] ERROR thread 7 cycle 0 (total 4)
+    35.03 [   34.583s] ERROR thread 11 cycle 0 (total 5)
+    40.60 [     40.2s] cycles 0, coverage 0.0%, 36.63 GB/s, errors 5
+    50.62 [     50.2s] cycles 0, coverage 0.0%, 35.91 GB/s, errors 5
+    60.68 [     60.2s] cycles 0, coverage 0.0%, 36.21 GB/s, errors 5
+    68.20 [   67.760s] ERROR thread 18 cycle 1 (total 6)
+    70.74 [     70.3s] cycles 23, coverage 95.8%, 36.05 GB/s, errors 6
+    72.85 [   72.399s] ERROR thread 19 cycle 1 (total 7)
+    76.23 [   75.783s] ERROR thread 4 cycle 1 (total 8)
+    80.77 [     80.3s] cycles 24, coverage 100.0%, 35.97 GB/s, errors 8
+    80.85 [   80.411s] ERROR thread 0 cycle 1 (total 9)
+    90.82 [     90.4s] cycles 24, coverage 100.0%, 36.01 GB/s, errors 9
+    97.37 [   96.932s] ERROR thread 14 cycle 1 (total 10)
+    97.50 [   97.049s] ERROR thread 10 cycle 1 (total 11)
+    98.63 [   98.170s] ERROR thread 17 cycle 1 (total 12)
+   100.38 [   99.934s] ERROR thread 23 cycle 1 (total 13)
+   100.83 [    100.4s] cycles 24, coverage 100.0%, 36.17 GB/s, errors 13
+   101.74 [  101.288s] ERROR thread 2 cycle 1 (total 14)
+   108.90 [  108.459s] ERROR thread 10 cycle 1 (total 15)
+   110.92 [    110.5s] cycles 24, coverage 100.0%, 36.17 GB/s, errors 15
+   111.65 [  111.202s] ERROR thread 6 cycle 1 (total 16)
+   120.44 [    120.0s] cycles 24, coverage 100.0%, 36.31 GB/s, errors 16
+   120.44 RESULT tester=memslammer errors=16 first_error_s=11.462 elapsed_s=120.004
