@@ -1,0 +1,10 @@
+build/
+# never commit third-party tester binaries, keys, or decompiler output
+*.exe
+*.dll
+*.key
+*.7z
+re/
+*.idb
+*.i64
+__pycache__/
