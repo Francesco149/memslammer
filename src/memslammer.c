@@ -378,7 +378,7 @@ static void usage(void)
         "  -m MB       memory to test (default 90%% of available)\n"
         "  -t N        threads (default: logical CPUs)\n"
         "  -M MODE     chain (default) or verify\n"
-        "  -b BYTES    block size (default: chain 4096, verify 4 MiB)\n"
+        "  -b BYTES    block size (default: chain 4096, verify 16 MiB)\n"
         "  -p N        chain: forward/reverse passes per cycle (default 4)\n"
         "  -d SECONDS  stop after this long (default: forever)\n"
         "  -o MASK     enabled ops bitmask: 1 add 2 sub 4 xor 8 not (default 15)\n"
@@ -433,7 +433,7 @@ int main(int argc, char **argv)
     if (!cfg.threads) cfg.threads = cpu_count();
     if (!cfg.megabytes) cfg.megabytes = avail_mb() * 9 / 10;
     if (!cfg.ops) cfg.ops = 0xF;
-    if (!cfg.block) cfg.block = cfg.mode ? 4u << 20 : 4096;
+    if (!cfg.block) cfg.block = cfg.mode ? 16u << 20 : 4096;
     if (cfg.block < 64 || cfg.block % 64) { fprintf(stderr, "block must be a multiple of 64\n"); return 2; }
     if (cfg.mode && cfg.block % 4096) { fprintf(stderr, "verify block must be a multiple of 4096\n"); return 2; }
     if (cfg.rereads < 1) cfg.rereads = 1;

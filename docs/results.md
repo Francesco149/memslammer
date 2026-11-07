@@ -104,3 +104,22 @@ default (4 MiB blocks, 200 re-reads, 24 threads). 3 rotated rounds, seconds.
   because SMT matters in itself.
 - 16 MiB blocks had the best median and the narrowest spread. Re-read count
   makes little difference between 20 and 2000.
+
+## 2026-11-07: block size and the L3 check, 5 min idle
+
+| variant              | runs           | median | range   |
+|----------------------|----------------|-------:|---------|
+| `-b 16 MiB` (6 runs) | 108, 106, 109 (+97, 88, 130) | 107 | 88–130 |
+| `-b 256 MiB`         | 114, 102, 90   | 102    | 90–114  |
+| `-b 64 MiB`          | 165, 244, 151  | 165    | 151–244 |
+| `-t 12 -b 16 MiB`    | 74, 244, 205   | 205    | 74–244  |
+
+- **The L3 explanation holds.** 12 threads never failed with 4 MiB blocks
+  (24 MB per CCD), but do fail with 16 MiB blocks (96 MB per CCD). They're
+  still slower than 24 threads.
+- **Block size isn't monotonic**: 64 MiB is clearly worse than 16 and 256
+  (its best run is slower than every 16 MiB run). The cause isn't known yet.
+  256 MiB covers only half the memory here, because the 490 MB per-thread
+  slice holds just one whole block.
+- **16 MiB is now the `verify` default**: best combination of median and
+  consistency across 6 runs.
