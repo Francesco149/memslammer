@@ -49,7 +49,8 @@ static struct {
     int pattern;     /* verify: 0 toggle, 1 mul, 2 random */
     int cache;       /* verify: 0 none, 1 prefetchnta on reads, 2 clflushopt after each pass */
     int order;       /* verify: 0 sequential, 1 shuffled 4 KiB pages on every pass */
-} cfg = { 0, 0, 0, 4, 1, 1, 0xF, 0, 0, 0, 200, 2, 0, 0 };
+    int heat;        /* verify: FP heat iterations after every 4 KiB (random pattern) */
+} cfg = { 0, 0, 0, 4, 1, 1, 0xF, 0, 0, 0, 200, 2, 0, 0, 0 };
 
 static const char *pattern_names[] = { "toggle", "mul", "random" };
 static const char *cache_names[] = { "none", "nta", "flush" };
@@ -272,6 +273,24 @@ static void *worker(void *vp)
 
 typedef __m256i v256;
 
+/* FP heat burst run after every 4 KiB of verify traffic (-H): 8 independent
+ * 4-wide double chains of x = (x * m + c) / d. The values converge to a
+ * normal fixed point, so there are no denormal or NaN shortcuts. */
+static _Atomic double heat_sink;  /* keeps the burst from being optimised away */
+
+static void heat(int iters)
+{
+    if (iters <= 0) return;
+    __m256d x[8], m = _mm256_set1_pd(0.9999), c = _mm256_set1_pd(1.25), d = _mm256_set1_pd(1.0001);
+    for (int j = 0; j < 8; j++) x[j] = _mm256_set1_pd(1.0 + j * 0.125);
+    for (int i = 0; i < iters; i++)
+        for (int j = 0; j < 8; j++)
+            x[j] = _mm256_div_pd(_mm256_add_pd(_mm256_mul_pd(x[j], m), c), d);
+    __m256d s = x[0];
+    for (int j = 1; j < 8; j++) s = _mm256_add_pd(s, x[j]);
+    atomic_store_explicit(&heat_sink, _mm256_cvtsd_f64(s), memory_order_relaxed);
+}
+
 /* 4 KiB template: within each 64 B line the four 8 B beats alternate x, ~x,
  * so every DQ line toggles on every beat; x's u16 lanes are a base value
  * rotated by lane index plus line index, so the pattern also walks across
@@ -315,6 +334,7 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
                 if (cfg.cache == 1 && !(i & 1)) _mm_prefetch((const char *)(blk + i) + NTA_AHEAD, _MM_HINT_NTA);
                 a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(blk + i)));
             } else _mm256_store_si256(blk + i, v);
+            if ((i & 127) == 127) heat(cfg.heat);
         }
     } else {
         for (u64 pg = 0; pg < nv / 128; pg++) {
@@ -359,6 +379,7 @@ static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, in
             if (check) a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(p + j)));
             else _mm256_store_si256(p + j, v);
         }
+        heat(cfg.heat);
     }
     if (check) *acc = a;
 }
@@ -415,6 +436,8 @@ static void usage(void)
         "              pass) or nta (prefetchnta; does not bypass L3 on Zen 3)\n"
         "  -A ORDER    verify re-read order: seq (default) or shuffle (4 KiB pages\n"
         "              in a new pseudo-random order every pass; random pattern only)\n"
+        "  -H N        verify: N iterations of an AVX FP heat burst after every\n"
+        "              4 KiB read or written (random pattern only; default 0)\n"
         "  -Y          disable yield after each block\n"
         "  -s          stop on first error\n");
     exit(2);
@@ -440,6 +463,7 @@ int main(int argc, char **argv)
         case 'd': cfg.seconds = atof(v); break;
         case 'o': cfg.ops = (int)strtol(v, 0, 0) & 0xF; break;
         case 'r': cfg.rereads = atoi(v); break;
+        case 'H': cfg.heat = atoi(v); break;
         case 'M':
             if (!strcmp(v, "chain")) cfg.mode = 0;
             else if (!strcmp(v, "verify")) cfg.mode = 1;
@@ -470,6 +494,7 @@ int main(int argc, char **argv)
     if (cfg.block < 64 || cfg.block % 64) { fprintf(stderr, "block must be a multiple of 64\n"); return 2; }
     if (cfg.mode && cfg.block % 4096) { fprintf(stderr, "verify block must be a multiple of 4096\n"); return 2; }
     if (cfg.rereads < 1) cfg.rereads = 1;
+    if (cfg.heat && cfg.pattern != 2) { fprintf(stderr, "-H needs -P random\n"); return 2; }
     if (cfg.order && (cfg.pattern != 2 || cfg.cache == 1 || (cfg.block & (cfg.block - 1)))) {
         fprintf(stderr, "-A shuffle needs -P random, no -C nta, and a power-of-two block\n");
         return 2;
@@ -493,9 +518,10 @@ int main(int argc, char **argv)
     if (!arena) { fprintf(stderr, "allocation of %llu MB failed\n", (unsigned long long)(total >> 20)); return 1; }
 
     if (cfg.mode)
-        printf("memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, order %s, yield %d\n",
+        printf("memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, order %s, heat %d, yield %d\n",
                (unsigned long long)(total >> 20), cfg.threads, (unsigned long long)cfg.block,
-               cfg.rereads, pattern_names[cfg.pattern], cache_names[cfg.cache], order_names[cfg.order], cfg.yield);
+               cfg.rereads, pattern_names[cfg.pattern], cache_names[cfg.cache], order_names[cfg.order],
+               cfg.heat, cfg.yield);
     else
         printf("memslammer chain: %llu MB, %d threads, block %llu, passes %d, flush %s, yield %d, ops 0x%x\n",
                (unsigned long long)(total >> 20), cfg.threads, (unsigned long long)cfg.block,

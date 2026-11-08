@@ -108,31 +108,43 @@ fill, and one whole-slice checksum checks it.
 - Fletcher-64 can in theory miss specific error combinations; negligible in
   practice.
 
-## Version 1.1.0.0 (front end studied 2026-11-08)
+## Version 1.1.0.0 (studied 2026-11-08)
 
-The 1.1.0.0 download contains only the GUI. `ramtest.dll` is never in the
-package: the activation server returns it with `license.key`, and
-`license.key` is bound to the app version, so each new GUI version needs a
-re-activation before it runs. The DLL analysed above is the 1.0.0.1 one.
+`ramtest.dll` is never in the download. The activation server returns it with
+`license.key`, and `license.key` is bound to the app version, so each new GUI
+version needs a re-activation before it runs.
 
-The 1.1 GUI adds an "Advanced settings" tab and three new DLL exports, each
-called right before `StartTest(megabytes, threads)`:
+**With default settings 1.1 runs exactly the 1.0.0.1 test.** The worker loop,
+op table, checksum, pass counts and coverage accounting are unchanged. The
+release adds three optional knobs, which the GUI sets through new exports
+(`SetCpuCache(int)`, `SetRng(int)`, `SetStressFpu(bool)`) right before
+`StartTest`:
 
-| export              | setting     | values (GUI default first)                        |
-|---------------------|-------------|---------------------------------------------------|
-| `SetCpuCache(int)`  | CPU cache   | 2 Default (cached, flushed often, = 1.0.0.1 behaviour), 0 Disabled (uncached pages), 1 Write-combine, 3 Enabled (no flushing) |
-| `SetRng(int)`       | RNG         | 0 RtlGenRandom, 1 XORWOW                          |
-| `SetStressFpu(bool)`| Stress FPU  | off; extra FPU load "for thermal simulation"      |
+| setting   | values                    | what it actually does                           |
+|-----------|---------------------------|-------------------------------------------------|
+| CPU cache | 0 Disabled                | allocation is `PAGE_NOCACHE`; no flushes        |
+|           | 1 Write-combine           | allocation is `PAGE_WRITECOMBINE`; no flushes   |
+|           | **2 Default**             | normal pages + clflush(opt) per block (= 1.0.0.1) |
+|           | 3 Enabled                 | normal pages, no flushes at all (like our `chain -F`) |
+| RNG       | **0 Default**             | RtlGenRandom per 4 KiB page (= 1.0.0.1)          |
+|           | 1 XORWOW                  | Marsaglia xorwow fills the slice as u32 words; state seeded once per thread from RtlGenRandom |
+| Stress FPU| **off** / on              | extra FP work inside each block step (below)     |
 
-- With default settings 1.1 should run the same algorithm as 1.0.0.1. This
-  is unconfirmed until we have the 1.1 DLL.
-- "Disabled" and "Write-combine" presumably change the `VirtualAlloc` page
-  protection (`PAGE_NOCACHE` / `PAGE_WRITECOMBINE`). The 1.0.0.1 DLL
-  hard-codes `PAGE_READWRITE`.
-- Stress FPU fits what we measured: temperature dominates time to error.
-  The README pitches it at IMC instability that depends on temperature.
-- Other changes: the log now records "ERROR DETECTED!" and the settings used,
-  and telemetry includes the new settings.
+- **The flush is now gated on mode 2.** In "Enabled" mode the forward
+  transform and checksum run in cache, so with a 4 KiB block most of the
+  traffic never reaches DRAM until eviction. Expect more coverage per second
+  but less DRAM read-after-write.
+- **Stress FPU doesn't add threads.** Each worker runs a short FP burst
+  right after transforming a block (forward passes) and right before
+  checksumming one (reverse passes): 64 iterations of a chain over 8 FP vectors
+  (scalar, xmm or ymm doubles depending on the CPU) of mul, add, div, then sub, each depending on
+  its neighbour. It's latency-bound and div-heavy rather than a throughput
+  power virus, and it also inserts a delay between a block's write and its
+  read-back. The GUI warns it can damage the CPU without enough cooling, and
+  the README pitches it at memory-controller instability that depends on
+  temperature.
+- Also new: the log records "ERROR DETECTED!" and the settings used, and
+  telemetry includes them.
 
 ## Throughput model
 

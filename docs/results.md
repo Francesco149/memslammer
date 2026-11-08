@@ -143,3 +143,25 @@ order alternated each round, seconds.
   88–130 s on 2026-11-07 and in 341–397 s today. Start Tctl was ~47 °C in
   every run today. Compare only runs within one batch, and re-run a control
   in every batch.
+
+## 2026-11-08: FP heat burst (Karhu 1.1 "Stress FPU" idea), 5 min idle
+
+`verify -H 64` runs 64 iterations of an 8-vector AVX mul/add/div chain after
+every 4 KiB read or written. At 64 the box still reads at the full ~57 GB/s;
+at 128 it drops to 40 GB/s and at 256 to 24 GB/s. 4 rounds, order alternated
+each round, seconds.
+
+| variant          | runs                    | median | start / end Tctl (°C) |
+|------------------|-------------------------|-------:|-----------------------|
+| default          | 308, 253, 667, 143      | **280**| 47–55 / 75–80         |
+| `-H 64`          | 475, 245, 332, 598      | 404    | 47–50 / 76–79         |
+
+- **No gain.** The burst didn't raise end Tctl measurably either: a
+  memory-bound run already sits at roughly the same CPU temperature.
+  Extra FP work at full bandwidth doesn't heat the memory controller or
+  DIMMs faster. `-H` stays, default 0.
+- The fastest run in the batch (143 s) is the only one that started warm
+  (55 °C after a long session). Starting temperature still outweighs every
+  tuning knob tried today.
+- Default spread today is 143–667 s. With n=4, differences under ~1.5x in
+  median are noise.
