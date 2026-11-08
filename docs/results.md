@@ -123,3 +123,23 @@ default (4 MiB blocks, 200 re-reads, 24 threads). 3 rotated rounds, seconds.
   slice holds just one whole block.
 - **16 MiB is now the `verify` default**: best combination of median and
   consistency across 6 runs.
+
+## 2026-11-08: re-read order, 5 min idle
+
+`verify -A shuffle` re-reads the 4 KiB pages of each 16 MiB block in a new
+pseudo-random order on every pass, to open more DRAM rows per second than
+in-order streaming. It runs at ~38 GB/s against ~57 GB/s in order. 4 rounds,
+order alternated each round, seconds.
+
+| variant          | runs                | median | range   |
+|------------------|---------------------|-------:|---------|
+| default (seq)    | 397, 341, 355, 374  | **365**| 341–397 |
+| `-A shuffle`     | 311, 494, 459, 412  | 435    | 311–494 |
+
+- **Shuffled order doesn't help.** It has the worse median and the wider
+  spread, and it heats the CPU less (end Tctl ~72–76 °C against ~75 °C).
+  Seq stays the default; `-A shuffle` stays available as an option.
+- **The baseline moved ~3x between days.** The same default config failed in
+  88–130 s on 2026-11-07 and in 341–397 s today. Start Tctl was ~47 °C in
+  every run today. Compare only runs within one batch, and re-run a control
+  in every batch.

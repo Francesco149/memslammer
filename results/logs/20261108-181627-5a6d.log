@@ -1,0 +1,45 @@
+# & 'C:\msbench\memslammer.exe' '-m' '10866' '-d' '900.0' '-s' '-M' 'verify' '-A' 'shuffle'
+     0.36 memslammer verify: 10752 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order shuffle, yield 1
+    10.41 [     10.0s] cycles 0, coverage 0.0%, 36.59 GB/s, errors 0
+    20.44 [     20.1s] cycles 0, coverage 0.0%, 40.36 GB/s, errors 0
+    30.51 [     30.1s] cycles 0, coverage 0.0%, 43.84 GB/s, errors 0
+    40.53 [     40.2s] cycles 0, coverage 0.0%, 47.79 GB/s, errors 0
+    50.63 [     50.3s] cycles 0, coverage 0.0%, 41.74 GB/s, errors 0
+    60.67 [     60.3s] cycles 24, coverage 100.0%, 41.99 GB/s, errors 0
+    70.78 [     70.4s] cycles 24, coverage 100.0%, 41.02 GB/s, errors 0
+    80.80 [     80.4s] cycles 24, coverage 100.0%, 43.43 GB/s, errors 0
+    90.87 [     90.5s] cycles 24, coverage 100.0%, 46.88 GB/s, errors 0
+   100.88 [    100.5s] cycles 24, coverage 100.0%, 44.46 GB/s, errors 0
+   110.93 [    110.6s] cycles 48, coverage 200.0%, 44.30 GB/s, errors 0
+   120.98 [    120.6s] cycles 48, coverage 200.0%, 39.24 GB/s, errors 0
+   131.03 [    130.7s] cycles 48, coverage 200.0%, 42.29 GB/s, errors 0
+   141.10 [    140.7s] cycles 48, coverage 200.0%, 46.87 GB/s, errors 0
+   151.22 [    150.8s] cycles 48, coverage 200.0%, 45.02 GB/s, errors 0
+   161.30 [    160.9s] cycles 72, coverage 300.0%, 43.51 GB/s, errors 0
+   171.38 [    171.0s] cycles 72, coverage 300.0%, 40.44 GB/s, errors 0
+   181.41 [    181.0s] cycles 72, coverage 300.0%, 41.05 GB/s, errors 0
+   191.51 [    191.1s] cycles 72, coverage 300.0%, 47.73 GB/s, errors 0
+   201.61 [    201.2s] cycles 72, coverage 300.0%, 45.40 GB/s, errors 0
+   211.70 [    211.3s] cycles 94, coverage 391.7%, 43.14 GB/s, errors 0
+   221.74 [    221.4s] cycles 96, coverage 400.0%, 39.93 GB/s, errors 0
+   231.76 [    231.4s] cycles 96, coverage 400.0%, 41.08 GB/s, errors 0
+   241.84 [    241.5s] cycles 96, coverage 400.0%, 46.82 GB/s, errors 0
+   251.87 [    251.5s] cycles 96, coverage 400.0%, 46.09 GB/s, errors 0
+   261.97 [    261.6s] cycles 112, coverage 466.7%, 44.39 GB/s, errors 0
+   272.04 [    271.7s] cycles 120, coverage 500.0%, 40.19 GB/s, errors 0
+   282.05 [    281.7s] cycles 120, coverage 500.0%, 41.08 GB/s, errors 0
+   292.16 [    291.8s] cycles 120, coverage 500.0%, 45.38 GB/s, errors 0
+   302.26 [    301.9s] cycles 120, coverage 500.0%, 45.75 GB/s, errors 0
+   312.37 [    312.0s] cycles 131, coverage 545.8%, 45.76 GB/s, errors 0
+   322.37 [    322.0s] cycles 144, coverage 600.0%, 40.42 GB/s, errors 0
+   332.46 [    332.1s] cycles 144, coverage 600.0%, 40.43 GB/s, errors 0
+   342.58 [    342.2s] cycles 144, coverage 600.0%, 46.30 GB/s, errors 0
+   352.65 [    352.3s] cycles 144, coverage 600.0%, 43.86 GB/s, errors 0
+   362.66 [    362.3s] cycles 148, coverage 616.7%, 46.51 GB/s, errors 0
+   372.69 [    372.3s] cycles 168, coverage 700.0%, 41.35 GB/s, errors 0
+   382.74 [    382.4s] cycles 168, coverage 700.0%, 40.60 GB/s, errors 0
+   392.80 [    392.4s] cycles 168, coverage 700.0%, 44.91 GB/s, errors 0
+   402.87 [    402.5s] cycles 168, coverage 700.0%, 45.22 GB/s, errors 0
+   412.00 [  411.626s] ERROR thread 23 cycle 7 (total 1)
+   412.09 [    411.7s] cycles 168, coverage 700.0%, 45.00 GB/s, errors 1
+   412.09 RESULT tester=memslammer errors=1 first_error_s=411.626 elapsed_s=411.716

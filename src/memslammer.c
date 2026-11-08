@@ -48,10 +48,12 @@ static struct {
     int rereads;     /* verify: compare passes per fill (TM5 T1: 200) */
     int pattern;     /* verify: 0 toggle, 1 mul, 2 random */
     int cache;       /* verify: 0 none, 1 prefetchnta on reads, 2 clflushopt after each pass */
-} cfg = { 0, 0, 0, 4, 1, 1, 0xF, 0, 0, 0, 200, 2, 0 };
+    int order;       /* verify: 0 sequential, 1 shuffled 4 KiB pages on every pass */
+} cfg = { 0, 0, 0, 4, 1, 1, 0xF, 0, 0, 0, 200, 2, 0, 0 };
 
 static const char *pattern_names[] = { "toggle", "mul", "random" };
 static const char *cache_names[] = { "none", "nta", "flush" };
+static const char *order_names[] = { "seq", "shuffle" };
 
 /* prefetchnta distance for verify reads (TM5 prefetches 8 strides ahead) */
 #define NTA_AHEAD 512
@@ -340,11 +342,32 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
     if (check) *acc = a;
 }
 
+/* Random data seeded per 4 KiB page, so pages can be filled and checked in any
+ * order. Pass k visits page (k_mul * i + k_add) mod npages for i = 0..npages-1;
+ * k_mul is odd and npages a power of two, so that is a permutation. */
+static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, int check, v256 *acc)
+{
+    v256 a = _mm256_setzero_si256();
+    for (u64 i = 0; i < npages; i++) {
+        u64 pg = (k_mul * i + k_add) & (npages - 1), s = bseed ^ (pg * 0xd1b54a32d192ed03ull);
+        rng_t r;
+        for (int j = 0; j < 4; j++) r.s[j] = splitmix(&s);
+        v256 *p = blk + pg * 128;
+        for (int j = 0; j < 128; j++) {
+            v256 v = _mm256_set_epi64x((long long)rng_next(&r), (long long)rng_next(&r),
+                                       (long long)rng_next(&r), (long long)rng_next(&r));
+            if (check) a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(p + j)));
+            else _mm256_store_si256(p + j, v);
+        }
+    }
+    if (check) *acc = a;
+}
+
 static void *worker_verify(void *vp)
 {
     targ_t *ta = vp;
     char *base = arena + (u64)ta->id * slice_bytes;
-    u64 nblocks = slice_bytes / cfg.block;
+    u64 nblocks = slice_bytes / cfg.block, npages = cfg.block >> 12;
     u64 seed = 0x6d656d736c616d00ull ^ ((u64)ta->id << 32) ^ (u64)(now_s() * 1e9);
     u64 base_page = (u64)ta->id * (slice_bytes >> 12);
 
@@ -354,12 +377,15 @@ static void *worker_verify(void *vp)
             u64 page = base_page + b * (cfg.block >> 12) + cycle * 0x10001;
             rng_t r;
             for (int i = 0; i < 4; i++) r.s[i] = splitmix(&seed);
-            gen_block(blk, cfg.block, page, &r, 0, NULL);
+            u64 bseed = r.s[0];
+            if (cfg.order) gen_pages(blk, npages, bseed, 1, 0, 0, NULL);
+            else gen_block(blk, cfg.block, page, &r, 0, NULL);
             for (int k = 0; k < cfg.rereads; k++) {
                 if (atomic_load_explicit(&stop_flag, memory_order_relaxed)) return NULL;
                 if (cfg.cache == 2) { if (have_clflushopt) flush_opt(blk, cfg.block); else flush_legacy(blk, cfg.block); }
                 v256 acc;
-                gen_block(blk, cfg.block, page, &r, 1, &acc);
+                if (cfg.order) gen_pages(blk, npages, bseed, rng_next(&r) | 1, rng_next(&r), 1, &acc);
+                else gen_block(blk, cfg.block, page, &r, 1, &acc);
                 if (!_mm256_testz_si256(acc, acc)) { report_error(ta->id, cycle); break; }
             }
             atomic_fetch_add(&total_bytes, cfg.block * (1 + (u64)cfg.rereads));
@@ -387,6 +413,8 @@ static void usage(void)
         "  -P PATTERN  verify: random (default), toggle or mul\n"
         "  -C POLICY   verify reads: none (default), flush (clflushopt before each\n"
         "              pass) or nta (prefetchnta; does not bypass L3 on Zen 3)\n"
+        "  -A ORDER    verify re-read order: seq (default) or shuffle (4 KiB pages\n"
+        "              in a new pseudo-random order every pass; random pattern only)\n"
         "  -Y          disable yield after each block\n"
         "  -s          stop on first error\n");
     exit(2);
@@ -422,6 +450,11 @@ int main(int argc, char **argv)
             for (int j = 0; j < 3; j++) if (!strcmp(v, cache_names[j])) cfg.cache = j;
             if (cfg.cache < 0) usage();
             break;
+        case 'A':
+            cfg.order = -1;
+            for (int j = 0; j < 2; j++) if (!strcmp(v, order_names[j])) cfg.order = j;
+            if (cfg.order < 0) usage();
+            break;
         case 'P':
             cfg.pattern = -1;
             for (int j = 0; j < 3; j++) if (!strcmp(v, pattern_names[j])) cfg.pattern = j;
@@ -437,6 +470,10 @@ int main(int argc, char **argv)
     if (cfg.block < 64 || cfg.block % 64) { fprintf(stderr, "block must be a multiple of 64\n"); return 2; }
     if (cfg.mode && cfg.block % 4096) { fprintf(stderr, "verify block must be a multiple of 4096\n"); return 2; }
     if (cfg.rereads < 1) cfg.rereads = 1;
+    if (cfg.order && (cfg.pattern != 2 || cfg.cache == 1 || (cfg.block & (cfg.block - 1)))) {
+        fprintf(stderr, "-A shuffle needs -P random, no -C nta, and a power-of-two block\n");
+        return 2;
+    }
 
     /* map key&3 onto enabled ops, cycling through them */
     int en[4], ne = 0;
@@ -456,9 +493,9 @@ int main(int argc, char **argv)
     if (!arena) { fprintf(stderr, "allocation of %llu MB failed\n", (unsigned long long)(total >> 20)); return 1; }
 
     if (cfg.mode)
-        printf("memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, yield %d\n",
+        printf("memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, order %s, yield %d\n",
                (unsigned long long)(total >> 20), cfg.threads, (unsigned long long)cfg.block,
-               cfg.rereads, pattern_names[cfg.pattern], cache_names[cfg.cache], cfg.yield);
+               cfg.rereads, pattern_names[cfg.pattern], cache_names[cfg.cache], order_names[cfg.order], cfg.yield);
     else
         printf("memslammer chain: %llu MB, %d threads, block %llu, passes %d, flush %s, yield %d, ops 0x%x\n",
                (unsigned long long)(total >> 20), cfg.threads, (unsigned long long)cfg.block,

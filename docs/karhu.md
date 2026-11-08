@@ -108,6 +108,32 @@ fill, and one whole-slice checksum checks it.
 - Fletcher-64 can in theory miss specific error combinations; negligible in
   practice.
 
+## Version 1.1.0.0 (front end studied 2026-11-08)
+
+The 1.1.0.0 download contains only the GUI. `ramtest.dll` is never in the
+package: the activation server returns it with `license.key`, and
+`license.key` is bound to the app version, so each new GUI version needs a
+re-activation before it runs. The DLL analysed above is the 1.0.0.1 one.
+
+The 1.1 GUI adds an "Advanced settings" tab and three new DLL exports, each
+called right before `StartTest(megabytes, threads)`:
+
+| export              | setting     | values (GUI default first)                        |
+|---------------------|-------------|---------------------------------------------------|
+| `SetCpuCache(int)`  | CPU cache   | 2 Default (cached, flushed often, = 1.0.0.1 behaviour), 0 Disabled (uncached pages), 1 Write-combine, 3 Enabled (no flushing) |
+| `SetRng(int)`       | RNG         | 0 RtlGenRandom, 1 XORWOW                          |
+| `SetStressFpu(bool)`| Stress FPU  | off; extra FPU load "for thermal simulation"      |
+
+- With default settings 1.1 should run the same algorithm as 1.0.0.1. This
+  is unconfirmed until we have the 1.1 DLL.
+- "Disabled" and "Write-combine" presumably change the `VirtualAlloc` page
+  protection (`PAGE_NOCACHE` / `PAGE_WRITECOMBINE`). The 1.0.0.1 DLL
+  hard-codes `PAGE_READWRITE`.
+- Stress FPU fits what we measured: temperature dominates time to error.
+  The README pitches it at IMC instability that depends on temperature.
+- Other changes: the log now records "ERROR DETECTED!" and the settings used,
+  and telemetry includes the new settings.
+
 ## Throughput model
 
 Per cycle each slice is touched about 1 (fill) + 1 (checksum) + 8 × (RMW +
