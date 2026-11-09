@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """memslammer benchmark harness.
 
-Runs memory testers on a remote Windows box over ssh and records
-time-to-first-error, including runs that end in a crash or reboot.
+Runs memory testers on a remote box over ssh and records time-to-first-error,
+including runs that end in a crash or reboot. The target is Windows (OpenSSH
+with PowerShell) unless MSBENCH_OS=linux (root login, POSIX shell).
 
   bench.py deploy [--tm5 DIR]          build + upload binaries and scripts
   bench.py state                        show remote state (free RAM, busy testers)
@@ -11,8 +12,8 @@ time-to-first-error, including runs that end in a crash or reboot.
   bench.py summary                      aggregate results per label/tester
 
 TESTER is one of:
-  karhu                  licensed Karhu RAM Test, via harness/karhu_drv.c
-  tm5[:CONFIG]           TestMem5 v0.13.1 with bin\\CONFIG (default Absolut @ anta777.cfg)
+  karhu                  licensed Karhu RAM Test, via harness/karhu_drv.c (Windows)
+  tm5[:CONFIG]           TestMem5 v0.13.1 with bin\\CONFIG (default Absolut @ anta777.cfg) (Windows)
   memslammer             our tester; args after -- are passed through
 """
 import argparse
@@ -30,8 +31,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
+TARGET_OS = os.environ.get("MSBENCH_OS", "windows").lower()
+if TARGET_OS not in ("windows", "linux"):
+    sys.exit(f"MSBENCH_OS must be windows or linux, not {TARGET_OS!r}")
+LINUX = TARGET_OS == "linux"
+EXE = "" if LINUX else ".exe"
 HOST = os.environ.get("MSBENCH_HOST", "cutestation-win")
-RDIR = os.environ.get("MSBENCH_DIR", r"C:\msbench")
+RDIR = os.environ.get("MSBENCH_DIR", "/root/msbench" if LINUX else r"C:\msbench")
 KARHU_DLL = os.environ.get(
     "MSBENCH_KARHU_DLL",
     r"C:\Users\headpats\Documents\_ostools\KarhuSoftware.RAMTest_1.0.0.1\x64\ramtest.dll")
@@ -50,6 +56,16 @@ def ps_quote(s):
     return "'" + s.replace("'", "''") + "'"
 
 
+def rquote(s):
+    """Quote one argument for the target's shell."""
+    return shlex.quote(s) if LINUX else ps_quote(s)
+
+
+def rfile(name):
+    """Command prefix that runs deployed file NAME in the target's shell."""
+    return shlex.quote(f"{RDIR}/{name}") if LINUX else "& " + ps_quote(RDIR + "\\" + name)
+
+
 def ssh_run(cmd, timeout=60):
     p = subprocess.run(SSH + [HOST, cmd], capture_output=True, text=True, timeout=timeout)
     out = [l for l in (p.stdout + p.stderr).splitlines() if not NOISE.search(l)]
@@ -58,7 +74,7 @@ def ssh_run(cmd, timeout=60):
 
 def remote_state():
     try:
-        rc, out = ssh_run(f"& {ps_quote(RDIR + r'\guard.ps1')}", timeout=40)
+        rc, out = ssh_run(rfile("guard.sh" if LINUX else "guard.ps1"), timeout=40)
     except subprocess.TimeoutExpired:
         return None
     for l in out:
@@ -72,7 +88,7 @@ def remote_state():
 def remote_timings():
     """Decoded per-channel timings plus raw UMC registers, or {"error": ...}."""
     try:
-        rc, out = ssh_run(f"& {ps_quote(RDIR + r'\memtimings.exe')} --raw", timeout=30)
+        rc, out = ssh_run(rfile("memtimings" + EXE) + " --raw", timeout=30)
     except subprocess.TimeoutExpired:
         return {"error": "timeout"}
     t = {}
@@ -96,8 +112,12 @@ def timings_label(t):
 
 
 def remote_events(since_utc):
+    if LINUX:
+        cmd = rfile("events.sh") + " " + shlex.quote(since_utc)
+    else:
+        cmd = rfile("events.ps1") + f" -SinceUtc {ps_quote(since_utc)}"
     try:
-        rc, out = ssh_run(f"& {ps_quote(RDIR + r'\events.ps1')} -SinceUtc {ps_quote(since_utc)}", timeout=60)
+        rc, out = ssh_run(cmd, timeout=60)
     except subprocess.TimeoutExpired:
         return {"error": "timeout"}
     ev = {"lines": [l for l in out if l.startswith("EVENT ")]}
@@ -109,6 +129,16 @@ def remote_events(since_utc):
 
 def cmd_deploy(a):
     subprocess.run(["make", "-C", str(ROOT)], check=True)
+    if LINUX:
+        if a.tm5:
+            sys.exit("--tm5 is Windows-only")
+        ssh_run(f"mkdir -p {shlex.quote(RDIR)}")
+        files = [ROOT / "build/memslammer", ROOT / "build/memtimings",
+                 *sorted((ROOT / "harness/remote").glob("*.sh"))]
+        subprocess.run(["scp", "-q", "-o", "BatchMode=yes", *map(str, files), f"{HOST}:{RDIR}/"], check=True)
+        ssh_run(f"chmod +x {shlex.quote(RDIR)}/*")
+        print("deployed to", HOST, RDIR)
+        return
     ssh_run(f"New-Item -ItemType Directory -Force {ps_quote(RDIR)} | Out-Null")
     subprocess.run(["make", "-C", str(ROOT), "build/AMDFamily17.bin"], check=True)
     files = [ROOT / "build/memslammer.exe", ROOT / "build/karhu_drv.exe",
@@ -144,6 +174,8 @@ def cmd_timings(a):
 def build_remote_cmd(a, state):
     t = a.tester
     mb = a.mb or int(int(state["free_mb"]) * 0.9)
+    if LINUX and t != "memslammer":
+        sys.exit(f"{t} runs on Windows only")
     if t == "karhu":
         threads = a.threads or 0
         th = threads if threads else "$env:NUMBER_OF_PROCESSORS"
@@ -163,7 +195,7 @@ def build_remote_cmd(a, state):
         if a.threads:
             args += ["-t", str(a.threads)]
         args += a.extra
-        return (f"& {ps_quote(RDIR + r'\memslammer.exe')} " + " ".join(ps_quote(x) for x in args),
+        return (rfile("memslammer" + EXE) + " " + " ".join(rquote(x) for x in args),
                 {"mb": mb, "threads": a.threads or "auto", "args": a.extra})
     sys.exit(f"unknown tester {t}")
 
@@ -198,7 +230,7 @@ def run_once(a, idx):
     if a.warmup:
         print(f"   warm-up: memslammer chain {a.warmup:.0f}s (not recorded)", flush=True)
         try:
-            ssh_run(f"& {ps_quote(RDIR + r'\memslammer.exe')} -d {a.warmup}", timeout=a.warmup + 120)
+            ssh_run(rfile("memslammer" + EXE) + f" -d {a.warmup}", timeout=a.warmup + 120)
         except subprocess.TimeoutExpired:
             pass
         state = remote_state()
@@ -242,7 +274,7 @@ def run_once(a, idx):
         result = result or {"outcome": "interrupted"}
     wall = time.monotonic() - t0
 
-    rec = {"id": run_id, "start_utc": start_utc, "label": label, "notes": a.notes,
+    rec = {"id": run_id, "start_utc": start_utc, "os": TARGET_OS, "label": label, "notes": a.notes,
            "tester": a.tester, "params": params, "seconds_limit": a.seconds,
            "wall_s": round(wall, 2), "free_mb_before": int(state["free_mb"]),
            "mem": {"mts": state.get("mts"), "dimms": state.get("dimms")},
@@ -279,8 +311,9 @@ def run_once(a, idx):
     with open(RESULTS / "runs.jsonl", "a") as f:
         f.write(json.dumps(rec) + "\n")
     ev = rec.get("events", {})
+    hw = " ".join(f"{k}={ev[k]}" for k in ("whea", "mce", "oops") if k in ev) or "hw_events=?"
     print(f"== {run_id}: outcome={rec['outcome']} first_error_s={rec.get('first_error_s')} "
-          f"whea={ev.get('whea', '?')} wall={wall:.0f}s", flush=True)
+          f"{hw} wall={wall:.0f}s", flush=True)
     logf.close()
     return rec
 
@@ -304,14 +337,15 @@ def cmd_summary(a):
         if a.label and r.get("label") != a.label:
             continue
         key = (r.get("label"), r["tester"], json.dumps(r.get("params", {}).get("args", "")),
-               bool(r.get("rate_mode")), r.get("warmup_s") or 0, r.get("idle_s") or 0)
+               bool(r.get("rate_mode")), r.get("warmup_s") or 0, r.get("idle_s") or 0,
+               r.get("os", "windows"))
         groups.setdefault(key, []).append(r)
 
     def med(xs, w):
         return f"{statistics.median(xs):{w}.1f}" if xs else f"{'-':>{w}}"
 
     print(f"{'label':24} {'tester':56} {'n':>3} {'fail':>4} {'median_tte':>10} {'min':>7} {'max':>7} {'err/min':>8}  outcomes")
-    for (label, tester, args, rate, warm, idle), rs in sorted(groups.items(), key=lambda x: (str(x[0][0]), x[0][1], x[0][2])):
+    for (label, tester, args, rate, warm, idle, tos), rs in sorted(groups.items(), key=lambda x: (str(x[0][0]), x[0][1], x[0][2])):
         fails = [r for r in rs if r["outcome"] in ("error", "reboot", "harness_lost")]
         ttes = [r["first_error_s"] for r in fails if r.get("first_error_s") is not None]
         rates = [r["errors_per_min"] for r in rs if r.get("errors_per_min") is not None]
@@ -319,7 +353,7 @@ def cmd_summary(a):
         for r in rs:
             outc[r["outcome"]] = outc.get(r["outcome"], 0) + 1
         name = tester + ("" if args in ('""', "[]") else " " + " ".join(json.loads(args)))
-        name += (" [rate]" if rate else "") + (f" [warm {warm:.0f}s]" if warm else "") + (f" [cold {idle:.0f}s]" if idle else "")
+        name += (f" [{tos}]" if tos != "windows" else "") + (" [rate]" if rate else "") + (f" [warm {warm:.0f}s]" if warm else "") + (f" [cold {idle:.0f}s]" if idle else "")
         print(f"{str(label)[:24]:24} {name[:56]:56} {len(rs):3} {len(fails):4} {med(ttes, 10)} "
               f"{(f'{min(ttes):7.1f}' if ttes else f'{chr(45):>7}')} {(f'{max(ttes):7.1f}' if ttes else f'{chr(45):>7}')} "
               f"{med(rates, 8)}  {outc}")

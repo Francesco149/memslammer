@@ -22,12 +22,13 @@ make an unstable memory overclock fail **as fast as possible**.
 - [x] Baseline time-to-first-error at a fixed unstable OC: [docs/results.md](docs/results.md)
 - [x] `verify` mode (fill + re-verify, TM5 Absolut T1-like)
 - [x] Cold-start race: `verify` fastest from cold (median 218 s vs Karhu 368 s, TM5 418 s)
+- [x] Linux: static build, harness target, timings via sysfs; `verify` fails as fast as on Windows (median 211 s, 4/4)
 - [ ] Tune `verify` for cold start
 
 ## Build
 
 ```
-make            # build/memslammer (Linux) and build/memslammer.exe (mingw-w64)
+make            # build/memslammer (Linux, static) and build/memslammer.exe (mingw-w64)
 build/memslammer -m 4096 -d 600 -s
 ```
 
@@ -36,9 +37,9 @@ assumes AVX2.
 
 ## Benchmark harness
 
-Runs testers on a remote Windows machine over ssh (`MSBENCH_HOST`, default
-`cutestation-win`), stops each at its first error, and appends a record to
-`results/runs.jsonl`. Each record holds the outcome (`pass`, `error`,
+Runs testers on a remote Windows or Linux machine over ssh (`MSBENCH_HOST`,
+default `cutestation-win`), stops each at its first error, and appends a
+record to `results/runs.jsonl`. Each record holds the outcome (`pass`, `error`,
 `reboot`, `harness_lost`, `host_down`), the time to first error, and any
 WHEA, Kernel-Power 41, or bugcheck events logged during the run.
 
@@ -80,6 +81,23 @@ harness/bench.py summary
   `AMDFamily17` module (LGPL, not stored in this repo). AMD Zen 2/3 with DDR4
   is decoded so far.
 - A run refuses to start if another tester is already running on the target.
+
+### Linux targets
+
+```
+export MSBENCH_OS=linux MSBENCH_HOST=cutestation-linux
+harness/bench.py deploy                                     # to /root/msbench
+harness/bench.py run memslammer --idle 300 -- -M verify
+```
+
+- Log in as root: reading the timings writes the SMN index register in PCI
+  config space (sysfs), and that needs root and no kernel lockdown.
+- memslammer only. Karhu and TM5 are Windows programs.
+- Free RAM is `MemAvailable`, which includes reclaimable page cache.
+  Hardware events come from the kernel log: `mce` counts machine-check, EDAC
+  and memory-failure messages (WHEA's role on Windows), and `oops` counts
+  kernel oopses and segfaults.
+- Records carry `"os": "linux"`, and `summary` lists them separately.
 
 ## License
 

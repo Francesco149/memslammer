@@ -165,3 +165,33 @@ each round, seconds.
   tuning knob tried today.
 - Default spread today is 143–667 s. With n=4, differences under ~1.5x in
   median are noise.
+
+## 2026-11-09: Linux, 5 min idle
+
+The same box, booted from a live Ubuntu 26.04 USB (kernel 7.0, amd-pstate-epp,
+`powersave` governor with EPP `balance_performance`). The memory controller
+reported the same OC: `3600 c14 rcd14 rp16 ras36 rfc324`. Default `verify`
+(16 MiB blocks) with the test size pinned to 10900 MB to match the Windows
+runs, 4 runs. The box can't switch OS without a reboot, so there's no Windows
+control in this batch. Compare against earlier Windows batches with the same
+protocol instead.
+
+| OS / batch                               | runs                                | median  | range   | start / end Tctl (°C) |
+|------------------------------------------|-------------------------------------|--------:|---------|-----------------------|
+| **Linux**, 2026-11-09                    | 278, 196, 226, 170                  | **211** | 170–278 | 50–53 / 84            |
+| Windows, 2026-11-08 (default, 8 runs)    | 397, 341, 355, 374, 308, 253, 667, 143 | 348  | 143–667 | 47–55 / 75–80         |
+| Windows, 2026-11-07 (`-b 16 MiB`, 6 runs)| 97, 88, 130, 108, 106, 109          | 107     | 88–130  | 55–57 / 81–82         |
+
+- **The Linux build catches the fault as fast as the Windows build.** All 4
+  runs failed. The median falls between the two Windows days, and so does
+  the spread. Throughput is the same (57–60 GB/s). With day-to-day swings of
+  ~3x, "about the same" is the strongest claim the data supports.
+- No machine-check, EDAC or oops messages in the kernel log. Windows logged no
+  WHEA events either: the fault is silent data corruption that only a tester
+  sees.
+- Start Tctl puts the three batches in order: ~55 °C → 107 s, ~52 °C → 211 s,
+  ~47 °C → 348 s. That fits the earlier finding that starting temperature
+  dominates, though it's only three points.
+- End Tctl is ~84 °C on Linux against 75–82 °C on Windows at the same
+  bandwidth. amd-pstate may boost harder than Windows' Balanced plan. This
+  can't be separated from the day effect.

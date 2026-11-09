@@ -3,10 +3,14 @@ WINCC ?= x86_64-w64-mingw32-gcc
 
 PAWNIO_MODULES ?= 0.2.11
 
-all: build/memslammer build/memslammer.exe build/karhu_drv.exe build/memtimings.exe
+all: build/memslammer build/memtimings build/memslammer.exe build/karhu_drv.exe build/memtimings.exe
 
+# Linux builds are static so they run on any distro (live USBs have no compiler).
 build/memslammer: src/memslammer.c | build
-	$(CC) $(CFLAGS) -o $@ $< -pthread
+	$(CC) $(CFLAGS) -o $@ $< -static -pthread
+
+build/memtimings: src/memtimings.c | build
+	$(CC) -O2 -Wall -Wextra -o $@ $< -static
 
 build/memslammer.exe: src/memslammer.c | build
 	$(WINCC) $(CFLAGS) -o $@ $< -static -pthread

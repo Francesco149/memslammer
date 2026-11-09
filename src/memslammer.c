@@ -121,6 +121,15 @@ static u64 avail_mb(void)
     GlobalMemoryStatusEx(&ms);
     return ms.ullAvailPhys >> 20;
 #else
+    /* MemAvailable counts reclaimable page cache; _SC_AVPHYS_PAGES (MemFree)
+     * doesn't, and on Linux the cache often holds GBs. */
+    FILE *f = fopen("/proc/meminfo", "r");
+    char line[128];
+    unsigned long long kb = 0;
+    while (f && fgets(line, sizeof line, f))
+        if (sscanf(line, "MemAvailable: %llu kB", &kb) == 1) break;
+    if (f) fclose(f);
+    if (kb) return kb >> 10;
     return (u64)sysconf(_SC_AVPHYS_PAGES) * (u64)sysconf(_SC_PAGESIZE) >> 20;
 #endif
 }

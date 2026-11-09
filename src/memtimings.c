@@ -4,16 +4,23 @@
  * SPDX-License-Identifier: MIT
  *
  * AMD family 17h-1Ah only for now (Zen 1-5). Reads the UMC (unified memory
- * controller) registers over SMN through the PawnIO driver
- * (https://pawnio.eu, installed separately) and its signed AMDFamily17
- * module (from namazso/PawnIO.Modules, not redistributed here).
+ * controller) registers over SMN (system management network):
+ *
+ *   Windows: through the PawnIO driver (https://pawnio.eu, installed
+ *            separately) and its signed AMDFamily17 module (from
+ *            namazso/PawnIO.Modules, not redistributed here).
+ *   Linux:   through the SMN index/data pair in the root complex's PCI config
+ *            space (0x60/0x64 on 00:00.0), via sysfs. Needs root and no kernel
+ *            lockdown. The kernel drives the same pair (k10temp, amd_nb) under
+ *            its own lock, which we can't take, so a concurrent access could
+ *            in theory see the wrong register. We only read, a few hundred
+ *            times per invocation.
  *
  * Also prints the CPU Tctl temperature (TEMP line). Note that Tctl follows
  * CPU boost behaviour, not DRAM temperature.
  *
- * usage: memtimings [--raw] [path\to\AMDFamily17.bin]
+ * usage: memtimings [--raw] [path\to\AMDFamily17.bin]   (module path: Windows only)
  */
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -21,13 +28,17 @@
 
 typedef uint32_t u32;
 
+#ifdef _WIN32
+#include <windows.h>
+
 typedef HRESULT (WINAPI *pio_open_t)(PHANDLE);
 typedef HRESULT (WINAPI *pio_load_t)(HANDLE, const UCHAR *, SIZE_T);
 typedef HRESULT (WINAPI *pio_exec_t)(HANDLE, PCSTR, const ULONG64 *, SIZE_T, PULONG64, SIZE_T, PSIZE_T);
 typedef HRESULT (WINAPI *pio_close_t)(HANDLE);
 
 static pio_exec_t pio_exec;
-static HANDLE pio;
+static pio_close_t pio_close;
+static HANDLE pio, mtx;
 
 static int smn_read(u32 addr, u32 *val)
 {
@@ -52,6 +63,74 @@ static unsigned char *read_file(const char *path, SIZE_T *size)
     *size = n;
     return b;
 }
+
+/* Prints a TIMINGS error line and returns -1 on failure. */
+static int smn_open(const char *mod)
+{
+    char modpath[MAX_PATH];
+    if (!mod) {
+        GetModuleFileNameA(NULL, modpath, sizeof modpath);
+        char *s = strrchr(modpath, '\\');
+        strcpy(s ? s + 1 : modpath, "AMDFamily17.bin");
+        mod = modpath;
+    }
+
+    HMODULE lib = LoadLibraryA("PawnIOLib.dll");
+    if (!lib) lib = LoadLibraryA("C:\\Program Files\\PawnIO\\PawnIOLib.dll");
+    if (!lib) { printf("TIMINGS error=no_pawnio\n"); return -1; }
+    pio_open_t pio_open = (pio_open_t)GetProcAddress(lib, "pawnio_open");
+    pio_load_t pio_load = (pio_load_t)GetProcAddress(lib, "pawnio_load");
+    pio_close = (pio_close_t)GetProcAddress(lib, "pawnio_close");
+    pio_exec = (pio_exec_t)GetProcAddress(lib, "pawnio_execute");
+    if (!pio_open || !pio_load || !pio_exec || !pio_close) { printf("TIMINGS error=bad_pawnio\n"); return -1; }
+
+    SIZE_T blob_n;
+    unsigned char *blob = read_file(mod, &blob_n);
+    if (!blob) { printf("TIMINGS error=no_module path=%s\n", mod); return -1; }
+    HRESULT hr = pio_open(&pio);
+    if (FAILED(hr)) { printf("TIMINGS error=open hr=0x%08lx\n", (unsigned long)hr); return -1; }
+    hr = pio_load(pio, blob, blob_n);
+    if (FAILED(hr)) { printf("TIMINGS error=load hr=0x%08lx\n", (unsigned long)hr); return -1; }
+
+    /* Shared with other hardware monitors that drive the same PCI index/data pair. */
+    mtx = CreateMutexA(NULL, FALSE, "Global\\Access_PCI");
+    if (mtx) WaitForSingleObject(mtx, 2000);
+    return 0;
+}
+
+static void smn_close(void)
+{
+    if (mtx) { ReleaseMutex(mtx); CloseHandle(mtx); }
+    pio_close(pio);
+}
+
+#else /* Linux */
+#include <fcntl.h>
+#include <unistd.h>
+
+#define ROOT_DEV "/sys/bus/pci/devices/0000:00:00.0/"
+static int pcifd = -1;
+
+static int smn_read(u32 addr, u32 *val)
+{
+    if (pwrite(pcifd, &addr, 4, 0x60) != 4) return -1;
+    return pread(pcifd, val, 4, 0x64) == 4 ? 0 : -1;
+}
+
+static int smn_open(const char *mod)
+{
+    (void)mod;
+    char vendor[16] = "";
+    FILE *f = fopen(ROOT_DEV "vendor", "r");
+    if (f) { if (!fgets(vendor, sizeof vendor, f)) vendor[0] = 0; fclose(f); }
+    if (strncmp(vendor, "0x1022", 6)) { printf("TIMINGS error=not_amd\n"); return -1; }
+    pcifd = open(ROOT_DEV "config", O_RDWR);
+    if (pcifd < 0) { printf("TIMINGS error=open_pci_config need=root\n"); return -1; }
+    return 0;
+}
+
+static void smn_close(void) { close(pcifd); }
+#endif
 
 static u32 bits(u32 v, int hi, int lo) { return (v >> lo) & ((1u << (hi - lo + 1)) - 1); }
 
@@ -82,34 +161,7 @@ int main(int argc, char **argv)
         if (!strcmp(argv[i], "--raw")) raw = 1;
         else mod = argv[i];
     }
-    char modpath[MAX_PATH];
-    if (!mod) {
-        GetModuleFileNameA(NULL, modpath, sizeof modpath);
-        char *s = strrchr(modpath, '\\');
-        strcpy(s ? s + 1 : modpath, "AMDFamily17.bin");
-        mod = modpath;
-    }
-
-    HMODULE lib = LoadLibraryA("PawnIOLib.dll");
-    if (!lib) lib = LoadLibraryA("C:\\Program Files\\PawnIO\\PawnIOLib.dll");
-    if (!lib) { printf("TIMINGS error=no_pawnio\n"); return 1; }
-    pio_open_t pio_open = (pio_open_t)GetProcAddress(lib, "pawnio_open");
-    pio_load_t pio_load = (pio_load_t)GetProcAddress(lib, "pawnio_load");
-    pio_close_t pio_close = (pio_close_t)GetProcAddress(lib, "pawnio_close");
-    pio_exec = (pio_exec_t)GetProcAddress(lib, "pawnio_execute");
-    if (!pio_open || !pio_load || !pio_exec || !pio_close) { printf("TIMINGS error=bad_pawnio\n"); return 1; }
-
-    SIZE_T blob_n;
-    unsigned char *blob = read_file(mod, &blob_n);
-    if (!blob) { printf("TIMINGS error=no_module path=%s\n", mod); return 1; }
-    HRESULT hr = pio_open(&pio);
-    if (FAILED(hr)) { printf("TIMINGS error=open hr=0x%08lx\n", (unsigned long)hr); return 1; }
-    hr = pio_load(pio, blob, blob_n);
-    if (FAILED(hr)) { printf("TIMINGS error=load hr=0x%08lx\n", (unsigned long)hr); return 1; }
-
-    /* Shared with other hardware monitors that drive the same PCI index/data pair. */
-    HANDLE mtx = CreateMutexA(NULL, FALSE, "Global\\Access_PCI");
-    if (mtx) WaitForSingleObject(mtx, 2000);
+    if (smn_open(mod)) return 1;
 
     u32 regs[2][(REG_LAST - REG_FIRST) / 4 + 1];
     int ok[2] = { 1, 1 };
@@ -122,8 +174,7 @@ int main(int argc, char **argv)
     u32 thm;
     int thm_ok = !smn_read(0x00059800, &thm);
 
-    if (mtx) { ReleaseMutex(mtx); CloseHandle(mtx); }
-    pio_close(pio);
+    smn_close();
 
     if (thm_ok)
         printf("TEMP tctl=%.1f\n", (thm >> 21) * 0.125 - ((thm >> 19) & 1 ? 49 : 0));
