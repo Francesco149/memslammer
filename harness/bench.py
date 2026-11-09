@@ -305,8 +305,15 @@ def run_once(a, idx):
         # connection lost: crash, BSOD, reboot or ssh failure
         how, _ = wait_back(state["boot"], a.reboot_wait)
         rec["outcome"] = how
-        rec["first_error_s"] = round(last_out, 1)   # approx: last output before loss
-        rec["elapsed_s"] = round(last_out, 1)
+        rec["lost_at_s"] = rec["elapsed_s"] = round(last_out, 1)
+        if err_times:
+            # errors were reported before the loss; the crash isn't the first one
+            rec["errors"] = len(err_times)
+            rec["first_error_s"] = err_times[0]
+            if a.rate:
+                rec["error_times_s"] = err_times
+        else:
+            rec["first_error_s"] = round(last_out, 1)   # approx: last output before loss
     if rec["outcome"] != "host_down":
         rec["events"] = remote_events(start_utc)
         rec["tctl_end"] = remote_timings().get("tctl")
