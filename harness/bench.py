@@ -128,7 +128,7 @@ def remote_events(since_utc):
 
 
 def cmd_deploy(a):
-    subprocess.run(["make", "-C", str(ROOT)], check=True)
+    subprocess.run(["make", "-C", str(ROOT), "cli", "tools"], check=True)
     if LINUX:
         if a.tm5:
             sys.exit("--tm5 is Windows-only")
@@ -191,12 +191,15 @@ def build_remote_cmd(a, state):
         return (f"& {ps_quote(RDIR + r'\run_tm5.ps1')} -Dir {ps_quote(RDIR + r'\tm5')} "
                 f"-Config {ps_quote(cfg)} -Seconds {a.seconds}", {"config": cfg})
     if t == "memslammer":
+        # The default mode changed from chain to verify. Records from before
+        # that with no -M were chain runs, so always record the mode now.
+        extra = a.extra if "-M" in a.extra else ["-M", "verify"] + a.extra
         args = ["-m", str(mb), "-d", str(a.seconds)] + ([] if a.rate else ["-s"])
         if a.threads:
             args += ["-t", str(a.threads)]
-        args += a.extra
+        args += extra
         return (rfile("memslammer" + EXE) + " " + " ".join(rquote(x) for x in args),
-                {"mb": mb, "threads": a.threads or "auto", "args": a.extra})
+                {"mb": mb, "threads": a.threads or "auto", "args": extra})
     sys.exit(f"unknown tester {t}")
 
 
@@ -230,7 +233,7 @@ def run_once(a, idx):
     if a.warmup:
         print(f"   warm-up: memslammer chain {a.warmup:.0f}s (not recorded)", flush=True)
         try:
-            ssh_run(rfile("memslammer" + EXE) + f" -d {a.warmup}", timeout=a.warmup + 120)
+            ssh_run(rfile("memslammer" + EXE) + f" -M chain -d {a.warmup}", timeout=a.warmup + 120)
         except subprocess.TimeoutExpired:
             pass
         state = remote_state()

@@ -8,3 +8,5 @@ re/
 *.idb
 *.i64
 __pycache__/
+gui/target/
+dist/

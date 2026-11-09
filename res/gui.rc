@@ -1,0 +1,4 @@
+#define MS_NAME "memslammer-gui"
+#define MS_DESCRIPTION "memslammer memory stress test"
+#define MS_NO_MANIFEST
+#include "common.rc"

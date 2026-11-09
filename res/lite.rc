@@ -1,0 +1,3 @@
+#define MS_NAME "memslammer-lite"
+#define MS_DESCRIPTION "memslammer memory stress test (lite)"
+#include "common.rc"

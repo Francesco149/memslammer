@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>memslammer: a memory test that fails unstable OCs fast</title>
+<meta name="description" content="Memory stress test for DDR overclock validation, built and benchmarked to make unstable memory settings fail as fast as possible. CLI, tiny native GUI, full app. MIT.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<style>
+:root {
+  --bg: #0d0f12; --bg2: #14171c; --line: #262b33; --fg: #d9dce1; --muted: #8b929c;
+  --accent: #e5484d; --gold: #e2a72e; --good: #3fb950; --link: #7cb7ff;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #fbfbfa; --bg2: #f1f2f3; --line: #dadde1; --fg: #1c1f24; --muted: #5d646e;
+  --accent: #c42b1c; --gold: #9a6b00; --good: #1a7f37; --link: #0b5cd5;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body { margin: 0; color: var(--fg); background: var(--bg); font: 15px/1.6 var(--sans); }
+main { max-width: 980px; margin: 0 auto; padding: 28px 20px 80px; }
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3 { line-height: 1.25; margin: 0; }
+h2 { font-size: 20px; margin: 44px 0 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+h3 { font-size: 15px; margin: 22px 0 6px; }
+p { margin: 8px 0; }
+ul { margin: 8px 0; padding-left: 20px; }
+li { margin: 3px 0; }
+code, pre, kbd { font-family: var(--mono); font-size: 13px; }
+code { background: var(--bg2); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+pre { background: var(--bg2); border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; overflow-x: auto; line-height: 1.5; }
+pre code { background: none; border: 0; padding: 0; }
+.err { color: var(--accent); } .ok { color: var(--good); } .dim { color: var(--muted); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.scroll { overflow-x: auto; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 13px; }
+td code { white-space: nowrap; }
+td.n, th.n { text-align: right; font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+header.top { display: flex; align-items: center; gap: 14px; }
+header.top img { width: 44px; height: 44px; }
+header.top h1 { font-size: 26px; }
+header.top .tag { color: var(--muted); font-size: 14px; }
+.spacer { flex: 1; }
+button.theme { background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 6px; padding: 4px 10px; cursor: pointer; font: 13px var(--sans); }
+.lead { font-size: 17px; margin: 18px 0 10px; max-width: 760px; }
+.dl { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 6px; }
+.dl a { display: block; border: 1px solid var(--line); background: var(--bg2); border-radius: 8px; padding: 10px 14px; color: var(--fg); min-width: 200px; flex: 1; }
+.dl a:hover { border-color: var(--muted); text-decoration: none; }
+.dl b { display: block; font-size: 15px; }
+figure a { display: block; }
+.dl span { color: var(--muted); font-size: 13px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin: 18px 0; }
+.facts div { border-left: 2px solid var(--gold); padding: 2px 0 2px 12px; font-size: 14px; }
+.facts b { display: block; font-size: 22px; font-family: var(--mono); font-weight: 600; }
+figure { margin: 0; }
+figure img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+figcaption { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.shots { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 14px; }
+.shots .wide { grid-column: 1 / -1; }
+.bars { margin: 14px 0 6px; }
+.bar { display: grid; grid-template-columns: 190px 1fr 64px; align-items: center; gap: 10px; margin: 6px 0; font-size: 14px; }
+.bar .track { background: var(--bg2); border-radius: 4px; height: 18px; position: relative; }
+.bar .fill { position: absolute; inset: 0 auto 0 0; background: var(--muted); border-radius: 4px; opacity: .55; }
+.bar.win .fill { background: var(--accent); opacity: .9; }
+.bar .v { font-family: var(--mono); font-size: 13px; text-align: right; }
+.note { color: var(--muted); font-size: 13px; }
+footer { margin-top: 56px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (max-width: 700px) {
+  .shots { grid-template-columns: 1fr; }
+  .bar { grid-template-columns: 120px 1fr 52px; }
+  header.top .tag { display: none; }
+}
+</style>
+</head>
+<body>
+<main>
+
+<header class="top">
+  <img src="img/icon.svg" alt="">
+  <div>
+    <h1>memslammer</h1>
+    <div class="tag">memory stress test for DDR overclock validation</div>
+  </div>
+  <div class="spacer"></div>
+  <a href="https://github.com/Francesco149/memslammer">GitHub</a>
+  <button class="theme" id="theme" type="button" aria-label="Toggle light and dark">light</button>
+</header>
+
+<p class="lead">One job: make an unstable memory overclock throw an error <b>as fast as possible</b>.
+We reverse-engineered how the fast-failing testers stress RAM, rebuilt each ingredient clean-room,
+and kept only what measurably shortened time-to-first-error on real unstable settings.</p>
+
+<div class="dl">
+  <a href="https://github.com/Francesco149/memslammer/releases/latest"><b>Windows</b><span>CLI + lite window · .zip · ~150 KB</span></a>
+  <a href="https://github.com/Francesco149/memslammer/releases/latest"><b>Windows, full app</b><span>memslammer-gui · .zip</span></a>
+  <a href="https://github.com/Francesco149/memslammer/releases/latest"><b>Linux</b><span>CLI + lite window · .tar.xz · ~50 KB</span></a>
+  <a href="https://github.com/Francesco149/memslammer/releases/latest"><b>Linux, full app</b><span>memslammer-gui · .tar.xz</span></a>
+</div>
+<p class="note">No installer, driver, admin rights or network access. Single-file binaries; checksums in <code>SHA256SUMS.txt</code>. Needs an x86-64 CPU with AVX2 (Haswell, Zen or newer). MIT licensed.</p>
+
+<div class="facts">
+  <div><b>218 s</b>median time to first error from cold, vs 368 s Karhu and 418 s TM5 Absolut</div>
+  <div><b>3 / 3</b>rounds won in the cold-start race (odds ~1 in 125 if all were equal)</div>
+  <div><b>57 GB/s</b>sustained read+write on a 5900X with dual-channel DDR4-3600</div>
+  <div><b>84 KB</b>static Linux CLI; the Windows CLI + native GUI zip is ~150 KB</div>
+</div>
+
+<figure>
+  <a href="img/gui-errors.png"><img src="img/gui-errors.png" alt="memslammer full app after a failed run, showing the error list"></a>
+  <figcaption>The full app on Windows after a real failure: DDR4-3600 with tCL/tRCD 14 on a Ryzen 9 5900X.</figcaption>
+</figure>
+
+<h2 id="use">Using it</h2>
+<ul>
+  <li><b>Close other programs</b>, start a test, and wait. The default is <code>verify</code> mode on 90% of free RAM, all threads, until stopped. That's the fastest-failing configuration we've measured.</li>
+  <li><b>Any error means the memory overclock is unstable.</b> The GUIs stop at the first error by default.</li>
+  <li><b>Errors come faster once the DIMMs are warm.</b> In our runs, the same setting failed within seconds on a hot box (4 s in the lite screenshot below) and took 2–11 minutes from cold. The usual loop (change one timing in UEFI, boot, retest) is a cold start, which is what we optimized for.</li>
+  <li><b>A clean run is evidence, not proof.</b> We tuned on one machine and one kind of fault (tCL/tRCD set too low). Use memslammer to reject bad settings quickly, then validate the final one longer, ideally with other testers too.</li>
+</ul>
+
+<h2 id="frontends">Three frontends, one engine</h2>
+<p>The test engine is a small C library (<code>core/</code>). Each frontend links it statically and only polls its status, so all three run byte-for-byte the same test loops.</p>
+<div class="scroll"><table>
+  <tr><th></th><th>what</th><th class="n">Windows</th><th class="n">Linux</th><th>deps</th></tr>
+  <tr><td><code>memslammer</code></td><td>command line, scriptable, works over SSH and from live USBs</td><td class="n">99 KB</td><td class="n">84 KB</td><td>none (static, musl on Linux)</td></tr>
+  <tr><td><code>memslammer-lite</code></td><td>small native window: plain Win32 controls, or GTK 3 on Linux</td><td class="n">152 KB</td><td class="n">60 KB</td><td>none on Windows, GTK 3 on Linux</td></tr>
+  <tr><td><code>memslammer-gui</code></td><td>GPU-rendered app (<a href="https://gpui-kit.com/">GPUI + gpui-kit</a>): live charts, per-thread progress, error list, failing-bit map, run history, copyable report</td><td class="n">14 MB</td><td class="n">32 MB</td><td>Vulkan or GL on Linux</td></tr>
+</table></div>
+<p class="note">The CLI and lite window ship together in one tiny archive. The full app is a separate download, so if you don't want a big GPU-rendered binary on your test box, you never get one.</p>
+
+<div class="shots">
+  <figure><a href="img/lite-windows.png"><img src="img/lite-windows.png" alt="memslammer-lite on Windows" loading="lazy"></a><figcaption><code>memslammer-lite</code> on Windows: plain Win32, about 150 KB, DPI-aware, taskbar progress, keeps the PC awake while it runs. A real failure, 4 s into a run on a hot box.</figcaption></figure>
+  <figure><a href="img/lite-linux.png"><img src="img/lite-linux.png" alt="memslammer-lite on Linux" loading="lazy"></a><figcaption><code>memslammer-lite</code> on Linux: GTK 3, follows your desktop theme, inhibits suspend while it runs.</figcaption></figure>
+  <figure><a href="img/gui-bits.png"><img src="img/gui-bits.png" alt="failing bit map" loading="lazy"></a><figcaption>Bit map: which bit positions of a 64-bit word flipped. On our test box every error from tCL/tRCD set too low hit the same line, byte 1 bit 7: timing faults tend to find the DQ with the least margin.</figcaption></figure>
+  <figure><a href="img/gui-threads.png"><img src="img/gui-threads.png" alt="full app per-thread view during a failing run" loading="lazy"></a><figcaption>Per-thread view of the same run: threads that hit an error turn red. 100% coverage means a thread has tested its whole share once.</figcaption></figure>
+</div>
+
+<h3>CLI</h3>
+<pre><code><span class="dim">&gt;</span> memslammer -s            <span class="dim"># verify 90% of free RAM, stop at the first error</span>
+memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1
+[     10.1s] cycles 0, coverage 26.9%, 57.90 GB/s, errors 0
+[     20.2s] cycles 0, coverage 53.8%, 57.97 GB/s, errors 0
+[     30.2s] cycles 0, coverage 80.8%, 57.86 GB/s, errors 0
+[     40.2s] cycles 24, coverage 108.3%, 57.73 GB/s, errors 0
+<span class="err">[   41.993s] ERROR thread 5 cycle 1 (total 1) bits 0x0000000000008000</span>
+[     42.0s] cycles 24, coverage 113.6%, 57.03 GB/s, errors 1
+RESULT tester=memslammer errors=1 first_error_s=41.993 elapsed_s=42.014</code></pre>
+<p class="note">Real output on the test box (warm, a few minutes after another run), same unstable setting as everywhere on this page.</p>
+<p>Options: <code>-m MB</code>, <code>-t threads</code>, <code>-d seconds</code>, <code>-s</code> stop on first error, <code>-M verify|chain</code>, plus every ingredient below (<code>-h</code> lists them). Exit status: 0 no errors, 1 errors, 2 bad arguments. Ctrl+C stops cleanly and prints the summary. Every GUI shows the equivalent CLI command for its settings.</p>
+
+<h2 id="how">How the test works</h2>
+<p><b><code>verify</code> (default).</b> Each thread owns a share of the test memory and walks it in 16 MiB blocks. It fills a block with random data (xoshiro256**, fresh seed per block), then re-reads and compares the block 200 times, regenerating the expected values on the fly, so there's no second copy to read. Any mismatch is an error, logged with the time, thread, block offset and the exact bits that flipped. Then it moves to the next block.</p>
+<p>What we learned building it (details and raw data in <a href="https://github.com/Francesco149/memslammer/blob/master/docs/results.md">docs/results.md</a>):</p>
+<ul>
+  <li><b>Data entropy is what triggers the fault.</b> The same fill-and-reread loop never failed in 10–15 minutes with low-entropy patterns (a toggle template, a 16-bit multiply chain), and failed in seconds with random data.</li>
+  <li><b>The working set must far exceed L3.</b> With 1 MiB blocks or half the threads, the re-reads stayed in each CCD's 32 MB L3 and nothing failed in 15 minutes. 16 MiB blocks had the best median and the tightest spread. 64 MiB was clearly worse, for reasons we haven't found yet.</li>
+  <li><b>Things that didn't help:</b> forcing DRAM reads with <code>clflushopt</code> (half the bandwidth, slower to fail), <code>prefetchnta</code> (doesn't bypass L3 on Zen 3), shuffled re-read order, and an AVX FP heat burst between reads (Karhu 1.1's "Stress FPU" idea). All stay available as options so they can be re-tested on other machines.</li>
+  <li><b>Starting temperature dominates everything we tuned.</b> The same config moved ~3x between days. Every comparison below interleaves contenders in one session.</li>
+</ul>
+<p><b><code>chain</code>.</b> A clean-room reimplementation of the chained transform and checksum technique Karhu RAM Test uses (<a href="https://github.com/Francesco149/memslammer/blob/master/docs/karhu.md">docs/karhu.md</a>). It's kept as a baseline. <code>verify</code> is modelled on the first test of TestMem5's anta777 "Absolut" profile (<a href="https://github.com/Francesco149/memslammer/blob/master/docs/tm5.md">docs/tm5.md</a>), which caught our test OC in 12 of 13 TM5 failures.</p>
+
+<h2 id="results">Results</h2>
+<p>Test box: Ryzen 9 5900X, 2x8 GB DDR4 at 3600 MT/s with <b>tCL 14 / tRCD 14</b> (deliberately too low, otherwise stable settings). No WHEA or machine-check events: the fault is silent data corruption that only a tester sees. The harness stops each tester at its first error and records the timings the memory controller actually ran.</p>
+
+<h3>Cold-start race: 15 min idle before each run, 3 rounds, order rotated</h3>
+<div class="bars">
+  <div class="bar win"><span><b>memslammer verify</b></span><div class="track"><div class="fill" style="width:52%"></div></div><span class="v">218 s</span></div>
+  <div class="bar"><span>verify, clflushopt</span><div class="track"><div class="fill" style="width:58%"></div></div><span class="v">242 s</span></div>
+  <div class="bar"><span>Karhu RAM Test</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="v">368 s</span></div>
+  <div class="bar"><span>memslammer chain</span><div class="track"><div class="fill" style="width:98%"></div></div><span class="v">411 s</span></div>
+  <div class="bar"><span>TM5 anta777 Absolut</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">418 s</span></div>
+</div>
+<p class="note">Median time to first error. Per-round times (verify / Karhu / TM5): 394 / 568 / 443, 218 / 368 / 418, 114 / 320 / 319 s. verify was fastest in every round.</p>
+
+<h3>Later batches: 5 min idle (the realistic "back from UEFI" case)</h3>
+<div class="scroll"><table>
+  <tr><th>batch</th><th>runs (s)</th><th class="n">median</th><th>start Tctl</th></tr>
+  <tr><td>Windows, 2026-11-07, 16 MiB blocks</td><td>97, 88, 130, 108, 106, 109</td><td class="n">107 s</td><td>55–57 °C</td></tr>
+  <tr><td>Linux (live USB), 2026-11-09</td><td>278, 196, 226, 170</td><td class="n">211 s</td><td>50–53 °C</td></tr>
+  <tr><td>Windows, 2026-11-08</td><td>397, 341, 355, 374, 308, 253, 667, 143</td><td class="n">348 s</td><td>47–55 °C</td></tr>
+</table></div>
+<p>Every run failed, the slowest after 667 s. Throughput and time-to-error are the same on Linux and Windows. The ordering by starting temperature is consistent with the finding that warm DIMMs fail sooner.</p>
+<p class="note">Limits: one machine, one fault type, small samples. Differences under ~1.5x in median are noise at these sample sizes. We found no tRFC setting that fails quickly, so refresh-timing faults are untested.</p>
+
+<h2 id="trust">Why trust it</h2>
+<ul>
+  <li>All source is here, MIT. The repo contains no code or binaries from the testers we studied; techniques are written up in our own words.</li>
+  <li>Release binaries are built by GitHub Actions from the tagged commit (<code>.github/workflows/release.yml</code>), with SHA-256 checksums. You can also build them yourself in a minute: <code>make</code>.</li>
+  <li>It runs as a normal user and only allocates and touches memory. No kernel driver, no network, no telemetry. The full app keeps a small run-history file in your user data folder; nothing else is written.</li>
+  <li>A self-test injects bit flips into the test memory while it runs and checks every one is caught, with the right bits, offset and thread (<code>make test</code>, run in CI).</li>
+</ul>
+
+<h2 id="build">Build from source</h2>
+<pre><code>make                 <span class="dim"># CLI + lite for Linux and Windows (gcc, mingw-w64, GTK 3 headers)</span>
+make gui             <span class="dim"># full app for this OS (Rust stable)</span>
+make test            <span class="dim"># self-test</span>
+make release V=0.2.0 <span class="dim"># tag + push; CI builds and publishes the release</span></code></pre>
+<p>Layout: <code>core/</code> engine (portable C, AVX2 loops isolated in <code>engine.c</code>), <code>cli/</code>, <code>lite/</code> (Win32 + GTK), <code>gui/</code> (Rust FFI + gpui-kit), <code>harness/</code> (the benchmark rig behind every number on this page), <code>docs/</code> (write-ups and raw results).</p>
+
+<footer>
+  memslammer · MIT · <a href="https://github.com/Francesco149/memslammer">source</a> · <a href="https://github.com/Francesco149/memslammer/blob/master/docs/results.md">raw results</a> · <a href="https://github.com/Francesco149/memslammer/issues">report a result or bug</a>
+</footer>
+</main>
+<script>
+(function () {
+  var b = document.getElementById('theme'), r = document.documentElement;
+  function cur() { return r.dataset.theme || 'dark'; }
+  function label() { b.textContent = cur() === 'dark' ? 'light' : 'dark'; }
+  try { var s = localStorage.getItem('theme'); if (s) r.dataset.theme = s; } catch (e) {}
+  label();
+  b.onclick = function () {
+    r.dataset.theme = cur() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('theme', r.dataset.theme); } catch (e) {}
+    label();
+  };
+})();
+</script>
+</body>
+</html>

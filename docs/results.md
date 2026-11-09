@@ -195,3 +195,30 @@ protocol instead.
 - End Tctl is ~84 °C on Linux against 75–82 °C on Windows at the same
   bandwidth. amd-pstate may boost harder than Windows' Balanced plan. This
   can't be separated from the day effect.
+
+## 2026-11-09: which bits flip
+
+The frontends' error log records, for every error, which bit positions of
+a 64-bit word differed in the failing pass. Same target
+(`3600 c14 rcd14`), Windows, default `verify` on 90% of free RAM:
+
+| run | first error | errors | bits that flipped |
+|---|---:|---:|---|
+| full app, stop on error off, 5:07 | 160.4 s | 5 | `0x8000` in all 5 |
+| CLI `-s`, right after (warm) | 42.0 s | 1 | `0x8000` |
+| lite window, right after (hot) | 4.3 s | 1 | `0x8000` |
+
+- **Every error flipped the same bit**, in all three runs: bit 15 of the 64-bit word, which is
+  byte lane 1, bit 7 on the DDR4 bus. A pure timing fault (tCL/tRCD too
+  low) hits one DQ line, presumably the one with the least margin, rather
+  than random bits. With two DIMMs and channel interleaving, user space
+  can't tell which DIMM or channel it is.
+- In the full-app run, thread 11 failed twice in the same 16 MiB block
+  (offset 4624 MiB, cycles 4 and 6), so some physical rows also seem weaker
+  than others.
+- Time to first error tracked how hot the box was: 160 s, then 42 s right
+  after, then 4 s right after that.
+- Untested idea: a pattern aimed at that bit, or at those rows, might fail
+  faster. It would also be machine-specific, so it can't be a default.
+- The full app's core is built with MSVC (`cl /arch:AVX2`) and ran at
+  56–57 GB/s, the same as the mingw-w64 CLI (57–58 GB/s).
