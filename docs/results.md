@@ -222,3 +222,23 @@ a 64-bit word differed in the failing pass. Same target
   faster. It would also be machine-specific, so it can't be a default.
 - The full app's core is built with MSVC (`cl /arch:AVX2`) and ran at
   56–57 GB/s, the same as the mingw-w64 CLI (57–58 GB/s).
+
+## 2026-11-09: Linux live USB, 5 min idle
+
+The same box booted from our own live USB ([live/](../live/README.md): Arch
+Linux, kernel 7.2.14), on Wi-Fi, with the harness over ssh. The memory
+controller reported the same OC: `3600 c14 rcd14 rp16 ras36 rfc324`. Default
+`verify` on 90% of free RAM (13823 MB requested; the Ubuntu batch above pinned
+10900 MB), 2 runs, each right after a fresh boot plus `--idle 300`.
+
+| OS / batch                               | runs     | median  | range   | start / end Tctl (°C) |
+|------------------------------------------|----------|--------:|---------|-----------------------|
+| **Linux live USB**, 2026-11-09           | 255, 207 | **231** | 207–255 | 45 / 81               |
+| Linux, Ubuntu live USB, 2026-11-09       | 278, 196, 226, 170 | 211 | 170–278 | 50–53 / 84      |
+
+- Both runs failed, inside the Ubuntu batch's range, so the live USB works
+  as a test platform: same fault, same speed (56 GB/s). Two runs with a
+  different test size support "consistent", nothing finer.
+- Both first errors flipped bit `0x8000`, like every error whose bits we have
+  recorded.
+- No machine-check, EDAC or oops messages in the kernel log.
