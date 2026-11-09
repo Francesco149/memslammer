@@ -17,7 +17,8 @@
  *            times per invocation.
  *
  * Also prints the CPU Tctl temperature (TEMP line). Note that Tctl follows
- * CPU boost behaviour, not DRAM temperature.
+ * CPU boost behaviour, not DRAM temperature. On DDR5, the DIMMs' own sensors
+ * are readable on Linux through the spd5118 driver (hwmon).
  *
  * usage: memtimings [--raw] [path\to\AMDFamily17.bin]   (module path: Windows only)
  */
@@ -140,8 +141,22 @@ static const u32 umc_base[] = { 0x050000, 0x150000 };
 #define REG_LAST  0x2fc
 #define R(ch, off) regs[ch][((off) - REG_FIRST) / 4]
 
+/* UMC config register. Bits 2:0 are the DRAM type on Zen 4 and later
+ * (1 = DDR5), the same check Linux amd64_edac makes; DDR4 UMCs read 0. */
+#define UMC_CFG 0x100
+
 /* Field layout for DDR4 Zen 2/3 UMCs, checked on a 5900X against the BIOS
- * values (cl/rcd) and the DDR4 7.8 us refresh interval (refi). */
+ * values (cl/rcd) and the DDR4 7.8 us refresh interval (refi).
+ *
+ * Zen 4 DDR5 (checked on a 7800X3D against SPD and BIOS values) keeps this
+ * layout for every field except rfc, and the clock word changes:
+ *   0x200 bits 15:0  MEMCLK in MHz (0x0bb8 = 3000 for DDR5-6000)
+ *   0x260..0x26c     four tRFC registers, bits 15:0 tRFC1, 31:16 tRFC2. Only
+ *                    one holds the programmed value; the others keep a reset
+ *                    value with a much smaller tRFC1, so the largest wins.
+ *   0x2c0..0x2cc     the same for tRFCsb, bits 10:0.
+ * Cmd2T and gear-down moved out of 0x200 bits 10/11; where they went isn't
+ * confirmed yet, so they are not printed for DDR5. */
 typedef struct { const char *name; u32 off; int hi, lo; } field_t;
 static const field_t fields[] = {
     { "cl",    0x204,  5,  0 }, { "rcdrd", 0x204, 21, 16 }, { "rcdwr", 0x204, 29, 24 },
@@ -163,11 +178,13 @@ int main(int argc, char **argv)
     }
     if (smn_open(mod)) return 1;
 
-    u32 regs[2][(REG_LAST - REG_FIRST) / 4 + 1];
+    u32 regs[2][(REG_LAST - REG_FIRST) / 4 + 1], cfg[2];
     int ok[2] = { 1, 1 };
-    for (int ch = 0; ch < 2; ch++)
+    for (int ch = 0; ch < 2; ch++) {
+        if (smn_read(umc_base[ch] + UMC_CFG, &cfg[ch])) ok[ch] = 0;
         for (u32 off = REG_FIRST; off <= REG_LAST; off += 4)
             if (smn_read(umc_base[ch] + off, &regs[ch][(off - REG_FIRST) / 4])) ok[ch] = 0;
+    }
 
     /* CPU Tctl (reported temperature control), as documented by Linux k10temp:
      * bits 31:21 in 1/8 degC, bit 19 selects the -49 degC range. */
@@ -181,18 +198,33 @@ int main(int argc, char **argv)
 
     for (int ch = 0; ch < 2; ch++) {
         if (!ok[ch]) { printf("TIMINGS ch=%d error=read\n", ch); continue; }
+        int ddr5 = bits(cfg[ch], 2, 0) == 1;
         if (raw) {
-            printf("RAW ch=%d", ch);
+            printf("RAW ch=%d %03x=%08x", ch, UMC_CFG, cfg[ch]);
             for (u32 off = REG_FIRST; off <= REG_LAST; off += 4)
                 printf(" %03x=%08x", off, regs[ch][(off - REG_FIRST) / 4]);
             printf("\n");
         }
-        printf("TIMINGS ch=%d", ch);
-        for (const field_t *f = fields; f->name; f++)
-            printf(" %s=%u", f->name, bits(R(ch, f->off), f->hi, f->lo));
-        u32 ratio = bits(R(ch, 0x200), 6, 0);
-        printf(" mts=%u cmd=%dT gdm=%d\n", (ratio * 200 + 1) / 3,
-               bits(R(ch, 0x200), 10, 10) ? 2 : 1, (int)bits(R(ch, 0x200), 11, 11));
+        printf("TIMINGS ch=%d type=%s", ch, ddr5 ? "ddr5" : "ddr4");
+        u32 rfc = 0, rfcsb = 0;
+        if (ddr5)
+            for (u32 off = 0; off < 16; off += 4) {
+                if (bits(R(ch, 0x260 + off), 15, 0) > bits(rfc, 15, 0)) rfc = R(ch, 0x260 + off);
+                if (bits(R(ch, 0x2c0 + off), 10, 0) > rfcsb) rfcsb = bits(R(ch, 0x2c0 + off), 10, 0);
+            }
+        for (const field_t *f = fields; f->name; f++) {
+            if (ddr5 && !strcmp(f->name, "rfc"))
+                printf(" rfc=%u rfc2=%u rfcsb=%u", bits(rfc, 15, 0), bits(rfc, 31, 16), rfcsb);
+            else
+                printf(" %s=%u", f->name, bits(R(ch, f->off), f->hi, f->lo));
+        }
+        if (ddr5) {
+            printf(" mts=%u\n", bits(R(ch, 0x200), 15, 0) * 2);
+        } else {
+            u32 ratio = bits(R(ch, 0x200), 6, 0);
+            printf(" mts=%u cmd=%dT gdm=%d\n", (ratio * 200 + 1) / 3,
+                   bits(R(ch, 0x200), 10, 10) ? 2 : 1, (int)bits(R(ch, 0x200), 11, 11));
+        }
     }
     return 0;
 }
