@@ -127,6 +127,7 @@ make                  # CLI + lite for Linux and Windows: gcc, mingw-w64, GTK 3 
 make gui              # full app for this OS: Rust stable (Linux: Vulkan/X11/Wayland headers)
 make test             # self-test: injects bit flips while the test runs, checks they're caught
 make dist             # release archives in dist/
+make live             # live USB ISO for testing other machines (live/README.md)
 ```
 
 Layout:
@@ -142,6 +143,7 @@ tests/      core self-test
 harness/    benchmark rig (runs testers on a remote box, records time-to-first-error)
 docs/       how Karhu and TM5 stress memory, and every benchmark result
 site/       GitHub Pages
+live/       recipe for a live USB that runs memslammer and the harness on other machines
 ```
 
 The core API is poll-based: `ms_start(config)` returns at once,
@@ -228,6 +230,16 @@ harness/bench.py run memslammer --idle 300
   and memory-failure messages (WHEA's role on Windows), and `oops` counts
   kernel oopses and segfaults.
 - Records carry `"os": "linux"`, and `summary` lists them separately.
+
+### Live USB
+
+[live/](live/README.md) builds a bootable Arch Linux ISO for testing other
+machines without touching their disks or settings. It boots from Ventoy or a
+dd'd stick (UEFI or BIOS), brings up Ethernet and Wi-Fi on its own, answers
+as `memslammer.local`, and accepts your ssh key. `/root/msbench` comes
+pre-populated, so `MSBENCH_OS=linux MSBENCH_HOST=ms-live harness/bench.py run
+memslammer` works right after boot. The ISO carries your Wi-Fi passphrase
+and an ssh host key, so we publish the recipe, not the image.
 
 ## License
 

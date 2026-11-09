@@ -1,0 +1,3 @@
+# A live system has no saved rfkill state; some laptops come up with Wi-Fi
+# soft-blocked. Unblock every Wi-Fi radio as it appears.
+ACTION=="add", SUBSYSTEM=="rfkill", ATTR{type}=="wlan", ATTR{soft}="0"

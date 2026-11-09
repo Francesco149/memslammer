@@ -1,0 +1,25 @@
+# Every physical Ethernet port, USB adapters and phone tethering included.
+[Match]
+Type=ether
+Kind=!*
+
+[Network]
+DHCP=yes
+# Without a DHCP server (a cable straight to another PC) this adds a
+# 169.254/16 address, next to the IPv6 link-local one that is always there.
+LinkLocalAddressing=yes
+MulticastDNS=yes
+LLMNR=yes
+
+[DHCPv4]
+# Keep our hostname: a router that remembers this MAC under another name
+# would otherwise rename the box, and memslammer.local with it.
+UseHostname=no
+# Lease by MAC: the machine-id (and with it the DUID) is new on every boot,
+# so this keeps a machine on the same address across boots.
+ClientIdentifier=mac
+# Prefer Ethernet over Wi-Fi when both are up (NetworkManager's metrics).
+RouteMetric=100
+
+[IPv6AcceptRA]
+RouteMetric=100

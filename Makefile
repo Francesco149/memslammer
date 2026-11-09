@@ -7,6 +7,7 @@
 #   make gui          gui/target/release/memslammer-gui (Rust + gpui-kit, this OS)
 #   make test         core self-test (injects bit flips, checks they're caught)
 #   make dist         release archives in dist/
+#   make live         live USB ISO in build/live/ (live/README.md; needs sudo)
 #   make release V=0.2.0   tag v0.2.0 and push it; CI builds and publishes
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo dev)
@@ -35,7 +36,7 @@ all: cli lite tools
 cli: build/memslammer build/memslammer.exe
 lite: build/memslammer-lite build/memslammer-lite.exe
 tools: build/memtimings build/memtimings.exe build/karhu_drv.exe
-.PHONY: all cli lite tools gui test dist release clean
+.PHONY: all cli lite tools gui test dist release live clean
 
 # ---- core: engine.c is the only file built with AVX2 ----
 $(L)/core.o: core/memslammer.c $(CORE_H) | $(L)
@@ -105,6 +106,11 @@ build/AMDFamily17.bin: | build
 # ---- packaging: a minimal archive (CLI + lite) and a GUI archive per OS ----
 dist: cli lite
 	scripts/package.sh "$(VERSION)"
+
+# Bootable ISO with the CLI, sshd and auto networking, for testing other
+# machines without touching their disks. Not part of a release.
+live:
+	live/build.sh
 
 release:
 	@test -n "$(V)" || { echo "usage: make release V=0.2.0"; exit 1; }

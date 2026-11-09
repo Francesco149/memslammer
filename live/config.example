@@ -1,0 +1,15 @@
+# Settings for live/build.sh. Copy to live/local/config (git ignores
+# live/local/) and edit. This is bash, sourced by the build script.
+
+# Public keys root accepts over ssh. Repeat for more keys.
+ssh_key ~/.ssh/id_ed25519.pub
+
+# Wi-Fi networks to join automatically: wifi SSID PASSPHRASE (WPA2/WPA3
+# personal). Read the passphrase from a password manager rather than typing
+# it here; list every band's SSID if they differ.
+#psk=$(pass show wifi/home)
+#wifi "home" "$psk"
+#wifi "home-5G" "$psk"
+
+# Answers as NAME.local (mDNS), NAME (LLMNR), and sends NAME with DHCP.
+#hostname=memslammer

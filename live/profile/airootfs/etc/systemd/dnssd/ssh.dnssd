@@ -1,0 +1,6 @@
+# Advertise ssh over DNS-SD, so `avahi-browse -rt _ssh._tcp` lists every
+# machine running the live USB.
+[Service]
+Name=%H
+Type=_ssh._tcp
+Port=22

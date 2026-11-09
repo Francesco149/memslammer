@@ -1,0 +1,44 @@
+# Kernel, boot, CPU microcode (loaded early through the initramfs)
+base
+linux
+mkinitcpio
+mkinitcpio-archiso
+syslinux
+amd-ucode
+intel-ucode
+
+# Firmware for NICs, Wi-Fi and GPUs that need it to light the console.
+# No NVIDIA firmware: nouveau is blacklisted (etc/modprobe.d), the console
+# runs on the firmware framebuffer instead.
+linux-firmware-amd
+linux-firmware-amdgpu
+linux-firmware-atheros
+linux-firmware-broadcom
+linux-firmware-intel
+linux-firmware-marvell
+linux-firmware-mediatek
+linux-firmware-other
+linux-firmware-radeon
+linux-firmware-realtek
+linux-firmware-ti
+
+# Network: systemd-networkd and -resolved come with base; iwd joins Wi-Fi;
+# chrony sets the clock (never the RTC, see etc/chrony.conf)
+openssh
+iwd
+chrony
+iw
+wireless-regdb
+ethtool
+
+# Looking at the machine (dmidecode is also used by the harness)
+dmidecode
+i2c-tools
+lm_sensors
+pciutils
+usbutils
+htop
+tmux
+less
+nano
+rsync

@@ -1,0 +1,134 @@
+#!/bin/bash
+# What the memslammer live USB sees on this machine: how to ssh in, the board,
+# the memory and the timings it runs, DIMM temperatures, and whether a test
+# is running or the kernel logged hardware errors.
+#   ms-status           print once (also shown at every ssh login)
+#   ms-status --watch   redraw every 3 s until a key is pressed (tty1)
+
+b=$'\e[1m' dim=$'\e[2m' red=$'\e[1;31m' grn=$'\e[32m' yel=$'\e[33m' r=$'\e[0m'
+row() { printf '%s%-6s%s%s\n' "$b" "$1" "$r" "$2"; }
+cont() { printf '      %s\n' "$1"; }
+
+# ---- static: computed once ----
+static() {
+    local v cpu board bios ram timings
+    v=$(cat /etc/memslammer-live 2>/dev/null)
+    printf '%smemslammer live%s %s%s%s\n\n' "$b" "$r" "$dim" "${v:-}" "$r"
+
+    local id=/sys/class/dmi/id
+    board="$(cat $id/board_vendor $id/board_name 2>/dev/null | paste -sd' ')"
+    [[ $board == *[![:space:]]* ]] || board="$(cat $id/sys_vendor $id/product_name 2>/dev/null | paste -sd' ')"
+    bios="$(cat $id/bios_version $id/bios_date 2>/dev/null | paste -sd' ')"
+    row board "${board:-unknown}  ${dim}BIOS $bios$r"
+
+    cpu=$(awk -F': ' '/^model name/ {print $2; exit}' /proc/cpuinfo)
+    row cpu "$cpu, $(nproc) threads"
+    grep -qw avx2 /proc/cpuinfo || cont "${red}no AVX2: memslammer needs Haswell, Zen or newer$r"
+
+    # One line per kind of DIMM: "2 x 8 GB DDR4 3600 MT/s  CMK16GX4M2Z4000C16"
+    ram=$(dmidecode -t 17 2>/dev/null | awk -F': *' '
+        function flush() { if (sz != "") n[sz " " ty " " sp "  " pn]++; sz = "" }
+        /^Memory Device/            { flush(); ty = sp = pn = "" }
+        $1 == "\tSize" && $2 ~ /^[0-9]/ { sz = $2 }
+        $1 == "\tType"              { ty = $2 }
+        $1 == "\tConfigured Memory Speed" && $2 ~ /^[0-9]/ { sp = $2 }
+        $1 == "\tPart Number"       { pn = $2; sub(/ +$/, "", pn); if (pn ~ /^(Not Specified|Unknown)$/) pn = "" }
+        END { flush(); for (k in n) print n[k] " x " k }')
+    local first=1
+    while IFS= read -r l; do
+        if ((first)); then row ram "$l"; first=0; else cont "$l"; fi
+    done <<<"${ram:-unknown (no SMBIOS memory devices)}"
+    cont "$(awk '/^MemTotal:/ {t = $2} /^MemAvailable:/ {a = $2}
+        END {printf "%.1f GiB total, %.1f GiB available", t / 1048576, a / 1048576}' /proc/meminfo)"
+
+    # Timings the memory controller runs (AMD Zen 2/3 DDR4 so far). Read once:
+    # the reader drives the SMN index register from user space, so polling it
+    # could race a harness run reading the same register pair.
+    timings=$(memtimings 2>/dev/null | awk '/^TIMINGS ch=0 / {
+        for (i = 2; i <= NF; i++) { split($i, kv, "="); t[kv[1]] = kv[2] }
+        if (t["mts"] != "") printf "%s c%s rcd%s rp%s ras%s rfc%s", t["mts"], t["cl"], t["rcdrd"], t["rp"], t["ras"], t["rfc"] }')
+    [[ -n $timings ]] && cont "timings $timings"
+}
+
+# ---- dynamic: every redraw ----
+dynamic() {
+    local host addrs=() ifc type oper ssid line
+    host=$(busctl get-property org.freedesktop.resolve1 /org/freedesktop/resolve1 \
+        org.freedesktop.resolve1.Manager LLMNRHostname 2>/dev/null | sed -n 's/^s "\(.*\)"$/\1/p')
+    host=${host:-$(</etc/hostname)}
+
+    echo
+    local first=1
+    while read -r _ ifc type oper _; do
+        [[ $type == ether || $type == wlan ]] || continue
+        local a4 a6 col=$yel
+        a4=$(ip -o -4 addr show dev "$ifc" | awk '{print $4}' | paste -sd' ')
+        a6=$(ip -o -6 addr show dev "$ifc" scope global | awk '{print $4; exit}')
+        [[ $oper == routable ]] && col=$grn
+        line="$(printf '%-10s %s%-11s%s %s' "$ifc" "$col" "$oper" "$r" "${a4:--}")${a6:+  $a6}"
+        if [[ $type == wlan ]]; then
+            ssid=$(iw dev "$ifc" link 2>/dev/null | sed -n 's/^\s*SSID: //p')
+            if [[ -n $ssid ]]; then line+="  ${dim}\"$ssid\"$r"
+            elif compgen -G '/var/lib/iwd/*.psk' >/dev/null; then line+="  ${dim}not joined yet$r"
+            else line+="  ${dim}no networks configured$r"; fi
+        fi
+        if ((first)); then row net "$line"; first=0; else cont "$line"; fi
+        for a in $a4; do [[ $a == 169.254.* ]] || addrs+=("${a%/*}"); done
+    done < <(networkctl list --no-legend 2>/dev/null)
+    ((first)) && row net "${red}no Ethernet or Wi-Fi device found$r"
+
+    line="root@$host.local"
+    for a in "${addrs[@]}"; do line+="  root@$a"; done
+    row ssh "$line"
+    cont "${dim}$(ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub 2>/dev/null | awk '{print $2, $4}')$r"
+
+    # DIMM temperature sensors (DDR5 SPD hubs, DDR4 TSODs), if the kernel bound any
+    local temps=()
+    for h in /sys/class/hwmon/hwmon*; do
+        [[ -r $h/name ]] || continue
+        case $(<"$h/name") in jc42 | spd5118)
+            temps+=("$(awk '{printf "%.1f°C", $1 / 1000}' "$h/temp1_input" 2>/dev/null)") ;;
+        esac
+    done
+    ((${#temps[@]})) && row dimm "${temps[*]}"
+
+    echo
+    local pids
+    pids=$(pgrep -x memslammer)
+    if [[ -n $pids ]]; then
+        local p
+        for p in $pids; do
+            row test "${b}running$r $(tr '\0' ' ' </proc/"$p"/cmdline 2>/dev/null)${dim}($(ps -o etime= -p "$p" | tr -d ' '))$r"
+        done
+    else
+        row test "idle"
+    fi
+    # Same patterns the harness counts (harness/remote/events.sh)
+    local log mce oops col=$grn
+    log=$(journalctl -k -b -q --no-pager 2>/dev/null)
+    mce=$(grep -cE '\[Hardware Error\]|Machine check|machine check|EDAC MC[0-9]+: [0-9]+ (CE|UE) |Memory failure' <<<"$log")
+    oops=$(grep -cE 'Oops|BUG:|general protection|segfault at' <<<"$log")
+    ((mce + oops)) && col=$red
+    cont "${col}kernel log: $mce hardware errors, $oops oopses/segfaults$r"
+
+    echo
+    printf '%smemslammer -s%s   test 90%% of free RAM until the first error (Ctrl+C stops; -h: options)\n' "$b" "$r"
+}
+
+if [[ $1 != --watch ]]; then
+    static
+    dynamic
+    exit
+fi
+
+s=$(static)
+trap 'printf "\e[?25h"' EXIT
+printf '\e[?25l\e[H\e[2J'
+while :; do
+    # Draw from the top, clearing each line's tail, so nothing flickers and
+    # kernel messages that scribbled over the screen get painted over.
+    out=$(printf '%s\n' "$s"; dynamic; printf '\n%sany key: shell%s' "$dim" "$r")
+    printf '\e[H%s\e[J' "${out//$'\n'/$'\e[K\n'}"
+    read -rsn1 -t 3 && break
+done
+printf '\e[H\e[2J'

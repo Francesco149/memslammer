@@ -10,3 +10,4 @@ re/
 __pycache__/
 gui/target/
 dist/
+live/local/

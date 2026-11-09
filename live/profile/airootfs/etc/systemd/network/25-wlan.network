@@ -1,0 +1,20 @@
+# Wi-Fi comes up next to Ethernet rather than only as a fallback: it needs no
+# timeout, and still works when a cable is plugged into a dead or isolated port.
+# iwd joins the networks in /var/lib/iwd (see live/build.sh).
+[Match]
+Type=wlan
+
+[Network]
+DHCP=yes
+MulticastDNS=yes
+LLMNR=yes
+
+[DHCPv4]
+# Keep our hostname: a router that remembers this MAC under another name
+# would otherwise rename the box, and memslammer.local with it.
+UseHostname=no
+ClientIdentifier=mac
+RouteMetric=600
+
+[IPv6AcceptRA]
+RouteMetric=600
