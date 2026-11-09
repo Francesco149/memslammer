@@ -32,7 +32,7 @@ const char *ms_version(void);
 typedef struct ms_test ms_test;
 
 enum { MS_MODE_CHAIN = 0, MS_MODE_VERIFY = 1 };
-enum { MS_PATTERN_TOGGLE = 0, MS_PATTERN_MUL = 1, MS_PATTERN_RANDOM = 2 };
+enum { MS_PATTERN_TOGGLE = 0, MS_PATTERN_MUL = 1, MS_PATTERN_RANDOM = 2, MS_PATTERN_KPAGE = 3 };
 enum { MS_CACHE_NONE = 0, MS_CACHE_NTA = 1, MS_CACHE_FLUSH = 2 };
 enum { MS_ORDER_SEQ = 0, MS_ORDER_SHUFFLE = 1 };
 
@@ -122,6 +122,14 @@ typedef struct ms_error {
     uint64_t bits[4];       /* verify: OR of (expected ^ read) over the failing
                              * pass, for each bit of a 32-byte vector, i.e. four
                              * consecutive 64-bit words. 0 in chain mode. */
+    int pass;               /* verify: which re-read of the block found it, 0 = the
+                             * first after the fill. -1 in chain mode. */
+    int recheck;            /* verify: right after the error the block is flushed
+                             * from cache and read twice more; this counts the
+                             * re-reads that failed again in the same bits.
+                             * 2 = the data stored in DRAM is wrong; 0 = it is
+                             * right and the failing read itself went wrong.
+                             * -1 in chain mode. */
 } ms_error;
 
 /* The last MS_ERRORS_KEPT errors are kept. Copies up to max of them with

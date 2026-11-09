@@ -87,7 +87,7 @@ struct ms_test {
 /* memslammer.c */
 double ms__now(void);
 void ms__yield(void);
-void ms__report_error(ms_test *t, int thread, u64 cycle, u64 offset, const u64 bits[4]);
+void ms__report_error(ms_test *t, int thread, u64 cycle, u64 offset, const u64 bits[4], int pass, int recheck);
 
 /* engine.c (built with AVX2) */
 void ms__engine_init(int line_size, int have_clflushopt);

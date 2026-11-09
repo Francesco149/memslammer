@@ -145,7 +145,7 @@ void ms__chain_worker(ms_test *t, int id)
         if (flush) flush_lines(base, slice);
         if (fletcher64(base, slice) != c0) {
             static const u64 none[4];
-            ms__report_error(t, id, cycle, (u64)id * slice, none);
+            ms__report_error(t, id, cycle, (u64)id * slice, none, -1, -1);
         }
         add64(&ctr->cycles, 1);
         add64(&ctr->blocks, nblocks);
@@ -205,13 +205,27 @@ static inline v256 page_key(u64 page)
 /* multiply chain constants, the same values Absolut passes as Param0/Param1 */
 static v256 mul0, mul1;
 
+/* Experimental: one 64-byte line repeated, copied from a Linux struct page as
+ * the kernel initialises it at boot (flags, self-pointing list head, zeroes,
+ * mapcount -1). On the DDR5 box that line came back with the same two bits
+ * flipped on two boots, so it may be a data pattern the bus handles badly. */
+static v256 kpage[2];
+
 /* Generate (fill) or check (xor-accumulate) one block. pages = block / 4096. */
 static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int check, v256 *acc,
                       int pattern, int cache, int heat_iters)
 {
     u64 nv = bytes / 32;
     v256 a = _mm256_setzero_si256();
-    if (pattern == MS_PATTERN_RANDOM) {
+    if (pattern == MS_PATTERN_KPAGE) {
+        for (u64 i = 0; i < nv; i++) {
+            v256 v = kpage[i & 1];
+            if (check) {
+                if (cache == MS_CACHE_NTA && !(i & 1)) _mm_prefetch((const char *)(blk + i) + NTA_AHEAD, _MM_HINT_NTA);
+                a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(blk + i)));
+            } else _mm256_store_si256(blk + i, v);
+        }
+    } else if (pattern == MS_PATTERN_RANDOM) {
         rng_t r = *seed_rng;
         for (u64 i = 0; i < nv; i++) {
             v256 v = _mm256_set_epi64x((long long)rng_next(&r), (long long)rng_next(&r),
@@ -302,7 +316,17 @@ void ms__verify_worker(ms_test *t, int id)
                 if (!_mm256_testz_si256(acc, acc)) {
                     u64 bits[4];
                     _mm256_storeu_si256((v256 *)bits, acc);
-                    ms__report_error(t, id, cycle, (u64)((char *)blk - t->arena), bits);
+                    /* Was the stored data wrong, or only this read? Re-read the
+                     * block from DRAM (the bad copy may sit in cache) twice. */
+                    int again = 0;
+                    for (int j = 0; j < 2; j++) {
+                        v256 acc2;
+                        flush_lines(blk, block);
+                        if (order) gen_pages(blk, npages, bseed, 1, 0, 1, &acc2, 0);
+                        else gen_block(blk, block, page, &r, 1, &acc2, pattern, cache, 0);
+                        if (!_mm256_testz_si256(acc2, acc)) again++;
+                    }
+                    ms__report_error(t, id, cycle, (u64)((char *)blk - t->arena), bits, k, again);
                     break;
                 }
             }
@@ -318,6 +342,9 @@ void ms__engine_init(int ls, int clflushopt)
     line_size = ls;
     have_clflushopt = clflushopt;
     build_template();
+    kpage[0] = _mm256_set_epi64x(0, (long long)0xfffffa7dd4603008ull, (long long)0xfffffa7dd4603008ull,
+                                 (long long)0x0017ffffc0000000ull);
+    kpage[1] = _mm256_set_epi64x(0, 0x00000000ffffffffll, 0, 0);
     mul0 = _mm256_set1_epi16(0x7777);
     mul1 = _mm256_set1_epi16(0x3333);
 }

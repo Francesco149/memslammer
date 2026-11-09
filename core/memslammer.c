@@ -226,7 +226,7 @@ static void thread_join(ms_thread th) { pthread_join(th, NULL); }
 /* ---------------- config ---------------- */
 
 static const char *mode_names[] = { "chain", "verify" };
-static const char *pattern_names[] = { "toggle", "mul", "random" };
+static const char *pattern_names[] = { "toggle", "mul", "random", "kpage" };
 static const char *cache_names[] = { "none", "nta", "flush" };
 static const char *order_names[] = { "seq", "shuffle" };
 
@@ -255,7 +255,7 @@ const char *ms_config_help(void)
         "  -b BYTES    block size (default: verify 16 MiB, chain 4096)\n"
         "  -Y          disable yield after each block\n"
         "  -r N        verify: compare passes per fill (default 200)\n"
-        "  -P PATTERN  verify: random (default), toggle or mul\n"
+        "  -P PATTERN  verify: random (default), toggle, mul or kpage (experimental)\n"
         "  -C POLICY   verify reads: none (default), flush (clflushopt before each\n"
         "              pass) or nta (prefetchnta; does not bypass L3 on Zen 3)\n"
         "  -A ORDER    verify re-read order: seq (default) or shuffle (4 KiB pages\n"
@@ -321,7 +321,7 @@ int ms_config_parse(ms_config *c, int argc, char **argv, char *err, size_t errle
             break;
         }
         case 'M': bad = (k = pick(v, mode_names, 2)) < 0; if (!bad) c->mode = k; break;
-        case 'P': bad = (k = pick(v, pattern_names, 3)) < 0; if (!bad) c->pattern = k; break;
+        case 'P': bad = (k = pick(v, pattern_names, 4)) < 0; if (!bad) c->pattern = k; break;
         case 'C': bad = (k = pick(v, cache_names, 3)) < 0; if (!bad) c->cache = k; break;
         case 'A': bad = (k = pick(v, order_names, 2)) < 0; if (!bad) c->order = k; break;
         }
@@ -338,7 +338,7 @@ static u64 slice_bytes_of(const ms_config *c)
 int ms_config_resolve(ms_config *c, char *err, size_t errlen)
 {
     if (c->mode != MS_MODE_CHAIN && c->mode != MS_MODE_VERIFY) { snprintf(err, errlen, "bad mode"); return -1; }
-    if (c->pattern < 0 || c->pattern > 2 || c->cache < 0 || c->cache > 2 || c->order < 0 || c->order > 1) {
+    if (c->pattern < 0 || c->pattern > 3 || c->cache < 0 || c->cache > 2 || c->order < 0 || c->order > 1) {
         snprintf(err, errlen, "bad pattern, cache or order setting");
         return -1;
     }
@@ -417,7 +417,7 @@ void ms_config_to_args(const ms_config *c, char *buf, size_t n)
 
 /* ---------------- test lifecycle ---------------- */
 
-void ms__report_error(ms_test *t, int thread, u64 cycle, u64 offset, const u64 bits[4])
+void ms__report_error(ms_test *t, int thread, u64 cycle, u64 offset, const u64 bits[4], int pass, int recheck)
 {
     double now = ms__now() - t->t_start;
     mutex_lock(&t->lock);
@@ -429,6 +429,8 @@ void ms__report_error(ms_test *t, int thread, u64 cycle, u64 offset, const u64 b
     e->cycle = cycle;
     e->offset = offset;
     memcpy(e->bits, bits, sizeof e->bits);
+    e->pass = pass;
+    e->recheck = recheck;
     mutex_unlock(&t->lock);
     add64(&t->ctr[thread].errors, 1);
     if (t->cfg.stop_on_error) st32(&t->stop, 1);

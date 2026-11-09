@@ -124,6 +124,8 @@ static void test_verify_flip(int stop_on_error)
               "verify: bits %016llx %016llx %016llx %016llx", (unsigned long long)e[i].bits[0],
               (unsigned long long)e[i].bits[1], (unsigned long long)e[i].bits[2], (unsigned long long)e[i].bits[3]);
         CHECK(e[i].offset % t->cfg.block == 0 && e[i].offset < t->total_bytes, "verify: offset %llu", (unsigned long long)e[i].offset);
+        CHECK(e[i].pass >= 0 && e[i].pass < c.rereads, "verify: pass %d", e[i].pass);
+        CHECK(e[i].recheck == 2, "verify: a flip stored in memory must fail both rechecks, got %d", e[i].recheck);
         CHECK(e[i].offset / t->slice_bytes == (u64)e[i].thread, "verify: offset outside thread %d's slice", e[i].thread);
         if (e[i].thread >= 0 && e[i].thread < 2) seen[e[i].thread] = 1;
     }
@@ -157,7 +159,8 @@ static void test_chain_flip(void)
     CHECK(s.errors >= 1, "chain: flips not caught");
     ms_error e;
     if (ms_get_errors(t, 0, &e, 1))
-        CHECK(e.offset == (u64)e.thread * t->slice_bytes, "chain: offset is the thread's slice");
+        CHECK(e.offset == (u64)e.thread * t->slice_bytes && e.pass == -1 && e.recheck == -1,
+              "chain: offset is the thread's slice, no pass/recheck");
     printf("chain flip: %llu errors\n", (unsigned long long)s.errors);
     ms_free(t);
 }

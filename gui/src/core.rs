@@ -63,6 +63,10 @@ pub struct Error {
     pub cycle: u64,
     pub offset: u64,
     pub bits: [u64; 4],
+    /// verify: which re-read of the block found it (0 = first); -1 in chain mode
+    pub pass: c_int,
+    /// verify: how many of 2 flushed re-reads right after failed again; -1 in chain mode
+    pub recheck: c_int,
 }
 
 impl Error {
