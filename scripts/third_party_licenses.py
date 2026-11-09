@@ -17,6 +17,8 @@ NAMES = ("license", "licence", "copying", "notice", "copyright")
 
 
 def main():
+    # UTF-8 everywhere: Windows defaults to the ANSI code page for both.
+    sys.stdout.reconfigure(encoding="utf-8", newline="\n")
     target = sys.argv[1] if len(sys.argv) > 1 else None
     cmd = ["cargo", "metadata", "--format-version", "1", "--locked",
            "--manifest-path", str(ROOT / "gui" / "Cargo.toml")]
@@ -50,7 +52,7 @@ def main():
         if not files:
             missing.append(label)
         for f in files:
-            t = f.read_text(errors="replace").strip()
+            t = f.read_text(encoding="utf-8", errors="replace").strip()
             texts.setdefault(t, []).append(label)
 
     out = sys.stdout
