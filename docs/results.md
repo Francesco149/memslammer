@@ -1,8 +1,9 @@
 # Benchmark results
 
-All runs are on cutestation: Ryzen 9 5900X, 2x8 GB DDR4 at 3600, deliberately
-unstable with **tCL 14 / tRCD 14** (label `3600 c14 rcd14`). Raw records live
-in `results/runs.jsonl`; `harness/bench.py summary` aggregates them.
+Until the DDR5 section at the end, all runs are on cutestation: Ryzen 9 5900X,
+2x8 GB DDR4 at 3600, deliberately unstable with **tCL 14 / tRCD 14** (label
+`3600 c14 rcd14`). Raw records live in `results/runs.jsonl`;
+`harness/bench.py summary` aggregates them.
 
 ## 2026-11-06: first baseline and ablations
 
@@ -242,3 +243,275 @@ controller reported the same OC: `3600 c14 rcd14 rp16 ras36 rfc324`. Default
 - Both first errors flipped bit `0x8000`, like every error whose bits we have
   recorded.
 - No machine-check, EDAC or oops messages in the kernel log.
+
+## 2026-11-09: DDR5 box, first unstable target
+
+A second box, on our live USB, wired: Ryzen 7 7800X3D (one CCD, 96 MB L3),
+ASUS ROG STRIX B650E-I (BIOS 3057), 2x16 GB Corsair CMK32GX5M2B6000C30. The
+SPD says SK hynix M-die, 16 Gb x8, single rank. EXPO runs it at 6000
+30-36-36-76. The user then set tRRDL 15→12, tWR 90→60 and tRTP 23→16; all
+three are below JEDEC at 6000 (15, 90, 23 clocks), though Hynix M-die
+usually takes values this tight. Label `7800X3D 6000 c30 rcd36 rp36 ras76
+rrdl12 wr60 rtp16`. The EXPO baseline only has one 5 min warm `verify` pass
+behind it, so it isn't proven stable either.
+
+New on DDR5: each DIMM's SPD hub has a temperature sensor, which Linux reads
+through the `spd5118` driver. `harness/remote/sampler.sh` logs it at 1 Hz
+next to Tctl; the samples are in `results/samples/`.
+
+### Cold start, 5 min idle, 10 min `--rate`
+
+First error at **61 s**; the user's own run on this setting failed at 142 s.
+402 errors in 600 s. DIMM temperature is the mean of the two DIMMs.
+
+| minute | DIMM °C | Tctl °C | errors |
+|-------:|--------:|--------:|-------:|
+| 0–1    | 33→39   | 70      | 0      |
+| 1–2    | 41      | 70      | 2      |
+| 2–3    | 44      | 70      | 1      |
+| 3–4    | 46      | 71      | 7      |
+| 4–5    | 48      | 71      | 22     |
+| 5–6    | 49      | 72      | 59     |
+| 6–10   | 50–53   | 72      | 69–86 per min |
+
+- **The error rate follows DIMM temperature, not CPU temperature.** Tctl was
+  flat at 70–72 °C from 30 s on, while the DIMMs climbed for the whole run
+  and errors went from none to ~80 a minute. On DDR4 we could only infer
+  this from Tctl. Cold time-to-first-error here is mostly the time it takes
+  the DIMMs to reach ~40 °C.
+- **Every error is in one byte lane.** All 402 errors hit only bytes 2 and 6
+  of the 64-bit word. A DDR5 subchannel is 32 bits wide, so that is byte
+  lane 2 on consecutive beats: one x8 chip position (or its PHY lane), on all
+  8 DQs, mostly 2–3 bits per error. DDR4's tCL/tRCD fault was one DQ line
+  (`0x8000`) every time. User space can't tell which of the four
+  subchannels it is.
+- Bandwidth stayed at 82.5 GB/s throughout. That is more than one Zen 4
+  CCD's fabric link can read (~64 GB/s at FCLK 2000), so some of `verify`'s
+  re-reads are served from the 96 MB L3 (16 threads x 16 MiB = 256 MiB
+  working set). Not measured further.
+
+### Stored data or bad reads: `pass` and `recheck`
+
+`verify` errors now say which re-read of the block found them (`pass`, 0 =
+the first after the fill). They also say how many of two further re-reads
+fail in the same bits (`recheck`), with the block flushed from cache before
+each. 2/2 means the data stored in DRAM is wrong; 0/2 means only that read
+went wrong.
+
+- **All 9062 errors with a recheck result, from this run and the runs
+  below, were `recheck 2/2`.** The DRAM holds the wrong data; none were
+  one-off bad reads.
+- In the default (`-r 200`) runs, 37–43% were caught on pass 0 or 1, the
+  first reads from DRAM after the fill. The rest thin out with time since
+  the write. In the first warm run (166 errors): passes 0–19: 94, 20–39:
+  23, then 3–11 per 20 passes.
+
+### Re-reads per fill, warm, 2 interleaved rounds of 90 s
+
+| `-r` | errors/min (round 1, 2) | GB/s | P(block fails, per fill) | DIMM °C mean |
+|-----:|------------------------:|-----:|-------------------------:|-------------:|
+| 200 (default) | 15, 95     | 82.5 | 1.0%, 6.5% | 48.5, 53.7 |
+| 20            | 323, 873   | 75   | 2.5%, 6.8% | 51.0, 54.1 |
+| 2             | 1594, 3028 | 48   | 2.8%, 5.3% | 53.0, 55.1 |
+
+- **The fault comes from the fill phase**: the stores plus the reads for
+  ownership and write-backs they cause. At the same DIMM temperature, a
+  freshly written block fails with about the same probability whether it's
+  then read 2, 20 or 200 times. Reading it 100x more adds nothing. So
+  errors per minute scale with fills per minute. In round 2, where the
+  DIMMs were within 1.5 °C across configs, `-r 20` found 9x more errors per
+  minute than the default and `-r 2` 32x, despite lower bandwidth.
+- A read-side fault would grow with the number of reads, as the DDR4
+  tCL/tRCD fault did; this one doesn't. That looked like tWR. **It isn't**:
+  see the tWR 90 run below.
+- `verify`'s default spends ~0.5% of its time filling, so it's slow on
+  faults that only the fill phase triggers. `-r 20` cost nothing on DDR4 (median 115 s against
+  113 s for the default, 2026-11-07) and gave ~10x the error rate here, which
+  makes it a candidate default. It still needs a cold-start comparison on
+  both boxes.
+- The DIMMs heated over the session, so each run was hotter than the one
+  before. In round 1 the per-fill probability rises with temperature (1.0%
+  → 2.8% over 48.5 → 53 °C). In round 2, within 1.5 °C, the three agree
+  (5.3–6.8%).
+
+### Side effects
+
+- The hot runs corrupted the kernel too: 9 `BUG: Bad page state` reports.
+  The first two show the same lane: a `mapcount` read `0xffbfffff` instead of
+  `0xffffffff` (bit 22, byte 2), and a `memcg` read `0x0006000000000000`
+  instead of 0 (bits 49–50, byte 6). The harness counts them as `oops`.
+  Reboot the box before any further runs.
+- After a run the DIMMs drop fast, then slowly: 55 °C at the end, 49 °C a
+  minute later, 45.5 °C after two. The cold run started at 33 °C, where the
+  DIMMs had sat flat for the whole 5 min idle. A fixed idle time gives different starting temperatures
+  depending on how hot the last run left the DIMMs. On DDR5, waiting for a
+  DIMM temperature is the better gate.
+- `memtimings` decoded DDR5 wrongly: it showed 3733 MT/s and tRFC 312. It now
+  reads the DRAM type from UMC_CFG (0x100 bits 2:0, 1 = DDR5) and shows 6000
+  MT/s and tRFC1/2/sb 884/480/390, which match the SPD's 295/160/130 ns. DDR4
+  output is unchanged apart from the new `type=` field (checked on the
+  5900X). Cmd2T and gear-down aren't decoded on DDR5 yet. Older DDR5 records
+  keep the raw registers, so they can be decoded again.
+
+### tWR back to 90
+
+The user reverted only tWR (label `... rrdl12 wr90 rtp16`) and rebooted.
+
+- The boot itself logged a `Bad page state` at 4.8 s, before anything ran,
+  with **the same fields as the first one from the earlier boot**: `index`
+  `0x200000` instead of 0 and `mapcount` `0xffbfffff` instead of
+  `0xffffffff`. Both are lane-2 bits (bits 21 and 22 of their words). The
+  kernel writes that 64-byte line with the same content for every page at
+  boot. In lane 2 it is, beat by beat, `00 17 60 ff 60 ff 00 00 [00→20] 00
+  00 00 [ff→bf] 00 00 00`: a lone `ff` among zeros came back as `bf`. The
+  same flips from the same data on two boots means the fault depends on the
+  data pattern. The boot also logged 9 `Invalid ELF header magic` (rejected
+  kernel modules), which may or may not be corruption; there's no clean
+  boot log to compare with yet.
+- Same cold protocol as the tWR 60 run. Errors per minute, minutes 0–7:
+  tWR 60: 0, 2, 1, 7, 22, 59, 69; **tWR 90: 0, 1, 2, 15, 17, 29, 52**. First
+  error at 69 s (tWR 60: 61 s). All 123 in lane 2, all `recheck 2/2`, 27%
+  on pass 0–1.
+- The kernel panicked at ~440 s. `harness/panicqr.py` decodes the log
+  from a photo of the drm_panic QR code: a NULL pointer dereference in the
+  scheduler's load balancer (`cpu_util`, from `sched_balance_softirq`), hit
+  by two CPUs at once while they ran memslammer. That fits corrupted
+  shared kernel data. The harness lost the connection and used to record
+  only the time of the loss; it now keeps the errors it saw (123, first at
+  69 s). The DIMM log was in the box's RAM and was lost. Stream the sampler
+  to the harness host instead.
+- So tWR isn't the cause. At this point we guessed that none of the three
+  timings was, because the fault comes only from the fill phase, and
+  suspected the electrical margin of lane 2 instead. That reasoning was
+  wrong; see the next run.
+
+### Full EXPO again
+
+The user went back to EXPO (tRTP 23, tRRDL 15, tWR 90). Every UMC register
+read the same as in the original baseline run. The boot logged nothing: no
+`Bad page state` and no `Invalid ELF header magic`, so the 9 rejected
+modules on the unstable boot were most likely corruption too. Same cold
+protocol, with the sampler streamed to the harness host.
+
+- **0 errors in 600 s**, with the DIMMs going 33.6 → 52 °C, about the same
+  path as the unstable runs. The tWR 60 run's rates, applied to the time
+  this run spent in each 1 °C bin, predict ~330 errors.
+- **So the fault is tRTP 16 or tRRDL 12 (or both).** The fill-phase-only
+  result doesn't exclude either. The fill isn't just writes: each store
+  first reads its line from DRAM, and dirty lines go back in a scattered
+  order. So the fill opens and closes many more DRAM rows than in-order
+  re-reads do. Rows opened in quick succession are what tRRDL limits, and a
+  read followed soon by a precharge is what tRTP limits. Next: a BIOS
+  bisect, one of the two at a time.
+- What does hold: on this box the fault corrupts stored data, mostly in the
+  fill phase, on one chip position (lane 2, all 8 DQs, the weakest die
+  presumably), and gets worse with DIMM temperature. That is what a core
+  timing violation on the slowest chip looks like. It also explains why
+  the identical boot-time memmap writes flipped identical bits.
+
+
+### tRTP 16 alone
+
+The user set EXPO with only tRTP lowered, 23→16 (label `7800X3D 6000 c30
+rcd36 rp36 ras76 rtp16`; `memtimings` read tRRDL 15, tWR 90, tRTP 16). Same
+cold protocol, sampler streamed to the harness host (record
+`20261109-212551-a06a`).
+
+- **680 errors in 600 s, first at 139 s** (DIMM 44.8 °C). tRTP 16 on its
+  own is enough for the fault, as the user had guessed.
+- Errors per minute, minutes 0–9. All three timings: 0, 2, 1, 7, 22, 59,
+  69, 86, 73, 83. **tRTP 16 alone: 0, 0, 5, 14, 31, 66, 125, 121, 142,
+  176.** This run's DIMMs were about 1 °C warmer throughout (34.8 → 53.8 °C
+  against 33.5 → 52.8 °C), which accounts for most of the difference. Per
+  DIMM temperature, in errors per minute:
+
+  | DIMM °C | all three | tRTP 16 alone |
+  |--------:|----------:|--------------:|
+  | 44–45   | 2.3       | 3.8           |
+  | 46–47   | 12.8      | 13.8          |
+  | 48–49   | 47.2      | 26.0          |
+  | 50–51   | 68.8      | 102.1         |
+  | 52      | 95.6      | 94.8          |
+  | 53      | —         | 194.5         |
+
+  The two agree within the noise of one run each, so tRRDL 12 and tWR 60
+  add nothing measurable on top of tRTP 16. Whether tRRDL 12 fails on its
+  own is still untested.
+- Same signature as before: every error in byte lane 2 (bytes 2 and 6 of
+  the word), all 8 DQs, mostly 2–3 bits; all 680 `recheck 2/2`; 25% caught
+  on pass 0–1.
+- The boot logged the same 9 `Invalid ELF header magic` as the tRRDL 12 +
+  tRTP 16 boot, and no `Bad page state`. The EXPO boot logged neither. No
+  MCE or kernel BUG during the run.
+- tRTP is the minimum time from a read to a precharge in the same bank.
+  That fits the fill-phase result: the fill's reads for ownership arrive
+  out of order, so many are followed soon by a precharge to open another
+  row, while `verify`'s in-order re-reads mostly hit an open row. Why an
+  early precharge corrupts the stored row rather than only the data being
+  read, we haven't established. One possibility is that the column path
+  still connected to the sense amplifiers disturbs them as the row closes,
+  so the wrong value is written back to the cells.
+
+### `-r 20` against the default, from cold
+
+Same setting (tRTP 16 alone), alternating. Runs 1–3 ran 10 min with
+`--rate` after a fixed idle (5–15 min). Runs 4–9 stopped at the first error
+and started once both DIMMs read ≤ 35 °C, after 60 s more idle for a sampler
+baseline. Seconds to first error:
+
+| run | start DIMM °C | default | `-r 20` | DIMM °C at error |
+|----:|--------------:|--------:|--------:|-----------------:|
+| 1   | 34.8          | 139     |         | 44.8             |
+| 2   | 35.5          |         | 24      | 38.5             |
+| 3   | 35.5          | 96      |         | 43.4             |
+| 4   | 33.5          |         | 28      | 36.9             |
+| 5   | 34.6          | 138     |         | 44.3             |
+| 6   | 34.8          |         | 36      | 38.8             |
+| 7   | 34.8          | 118     |         | 43.6             |
+| 8   | 34.8          |         | 48      | 39.8             |
+| 9   | 34.8          | 101     |         | 42.9             |
+
+- **`-r 20`: median 32 s (24–48). Default: median 118 s (96–139).** 3.7x
+  faster, and the ranges don't overlap: every `-r 20` run beat every default
+  run. If the two were equally fast, that would happen by chance about 1 in
+  126 times.
+- **The default only fails once the DIMMs reach 43–45 °C; `-r 20` fails at
+  37–40 °C.** The fault is already there just above idle temperature. The
+  default writes too rarely to catch it. That is ~16 fills per minute
+  across all threads against ~120 for `-r 20`, at 82 against 75 GB/s.
+- In the two 10 min `--rate` runs, errors per fill agreed at the same DIMM
+  temperature (around 49–50 °C: 1.9 for the default, 1.7 for `-r 20`), as
+  in the warm ablation. `-r 20` found 3937 errors in 10 min against 680 and
+  541 for the default.
+- All errors were `recheck 2/2`. 5 of `-r 20`'s 3937 were in byte lane 3
+  (bytes 3/7), the first errors outside lane 2, all after 427 s with the
+  DIMMs above 51 °C.
+- **Both 10 min `--rate` runs corrupted the box in their hot second half**,
+  the default one as well. After `-r 20`, sshd reset new connections during
+  key exchange. After the default, `dmesg` filled with `list_del
+  corruption` warnings (the page cache's LRU list) and `journalctl` failed
+  with a symbol lookup error in `libsystemd-shared`, a flipped bit in a
+  shared library held in RAM. Each needed a reboot. The stop-at-first-error
+  runs logged no kernel events, and four fit in one boot.
+- **On DDR4 the same change made no measurable difference**: `-r 20` 115,
+  122, 56 s against the default's 236, 55, 113 s (2026-11-07, 5 min idle).
+  That fault was read-side, so fewer re-reads per fill could have hurt
+  there; at n=3 it didn't visibly.
+- 3 of the 4 boots with tRTP 16 whose logs we checked (one also with
+  tRRDL 12) logged one or two `Bad page state` reports before anything ran, all lane-2 flips in `struct page` fields (`mapping`
+  0x20000 / 0x830000, `index` 0x800000, `mapcount` 0xfffeffff,
+  `memcg_data` 0x280000). All 4 logged the 9 `Invalid ELF header magic`.
+
+### Harness fixes from this round
+
+- `events.sh` read the kernel log through `journalctl`. When corruption
+  broke `journalctl`, it silently reported 0 events. It now falls back to
+  `dmesg` and says so (`src=dmesg`, or `src=dmesg_wrapped` when the ring
+  buffer had already lost older messages, so the count is a lower bound),
+  and prints `error=` when neither works. It also counts `list_add`/
+  `list_del corruption` reports as oopses.
+- It also filtered by wall-clock time. The live USB boots with the RTC's
+  time, which this Windows box keeps in local time (UTC+1), and chrony
+  steps the clock back later. So early-boot messages are stamped an hour
+  ahead, and `--since` counted the boot's own `Bad page state` as a new
+  event during the first hour. It now filters on time since boot.

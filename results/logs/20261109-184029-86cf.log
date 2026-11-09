@@ -1,0 +1,35 @@
+# /root/msbench/memslammer -m 27382 -d 90.0 -M verify -r 200
+     0.11 memslammer verify: 27136 MB, 16 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1
+    11.12 [     10.1s] cycles 0, coverage 14.2%, 82.33 GB/s, errors 0
+    21.14 [     20.1s] cycles 0, coverage 28.3%, 82.52 GB/s, errors 0
+    30.45 [   29.348s] ERROR thread 7 cycle 0 (total 1) bits 0x0079000000e20000 pass 0 recheck 2/2
+    31.15 [     30.1s] cycles 0, coverage 43.0%, 82.54 GB/s, errors 1
+    35.36 [   34.229s] ERROR thread 5 cycle 0 (total 2) bits 0x0002000000020000 pass 0 recheck 2/2
+    41.16 [     40.1s] cycles 0, coverage 57.5%, 82.58 GB/s, errors 2
+    46.97 [   45.835s] ERROR thread 3 cycle 0 (total 3) bits 0x0014000000080000 pass 0 recheck 2/2
+    51.18 [     50.1s] cycles 0, coverage 71.9%, 82.60 GB/s, errors 3
+    54.18 [   53.050s] ERROR thread 10 cycle 0 (total 4) bits 0x0002000000040000 pass 0 recheck 2/2
+    58.29 [   57.162s] ERROR thread 14 cycle 0 (total 5) bits 0x009b000000860000 pass 0 recheck 2/2
+    59.19 [   58.066s] ERROR thread 7 cycle 0 (total 6) bits 0x0000000000c80000 pass 4 recheck 2/2
+    59.69 [   58.530s] ERROR thread 7 cycle 0 (total 7) bits 0x000c000000100000 pass 139 recheck 2/2
+    60.99 [   59.835s] ERROR thread 5 cycle 0 (total 8) bits 0x0002000000020000 pass 0 recheck 2/2
+    61.19 [     60.1s] cycles 0, coverage 86.7%, 82.59 GB/s, errors 8
+    63.59 [   62.517s] ERROR thread 0 cycle 0 (total 9) bits 0x00000000000a0000 pass 0 recheck 2/2
+    65.10 [   64.020s] ERROR thread 7 cycle 0 (total 10) bits 0x0000000000240000 pass 85 recheck 2/2
+    65.50 [   64.417s] ERROR thread 7 cycle 0 (total 11) bits 0x0000000000310000 pass 118 recheck 2/2
+    69.50 [   68.394s] ERROR thread 5 cycle 1 (total 12) bits 0x0000000000800000 pass 1 recheck 2/2
+    69.70 [   68.629s] ERROR thread 4 cycle 0 (total 13) bits 0x0048000000800000 pass 187 recheck 2/2
+    69.90 [   68.820s] ERROR thread 3 cycle 1 (total 14) bits 0x0000000000800000 pass 25 recheck 2/2
+    70.00 [   68.850s] ERROR thread 2 cycle 0 (total 15) bits 0x0004000000200000 pass 51 recheck 2/2
+    70.00 [   68.924s] ERROR thread 5 cycle 1 (total 16) bits 0x000a000000000000 pass 158 recheck 2/2
+    70.20 [   69.061s] ERROR thread 8 cycle 1 (total 17) bits 0x0000000000310000 pass 6 recheck 2/2
+    70.20 [   69.132s] ERROR thread 5 cycle 1 (total 18) bits 0x0048000000800000 pass 59 recheck 2/2
+    71.20 [     70.1s] cycles 16, coverage 101.5%, 82.59 GB/s, errors 18
+    72.51 [   71.413s] ERROR thread 8 cycle 1 (total 19) bits 0x0000000000050000 pass 120 recheck 2/2
+    73.01 [   71.875s] ERROR thread 8 cycle 1 (total 20) bits 0x0000000000840000 pass 138 recheck 2/2
+    73.01 [   71.919s] ERROR thread 8 cycle 1 (total 21) bits 0x0000000000830000 pass 9 recheck 2/2
+    73.71 [   72.581s] ERROR thread 8 cycle 1 (total 22) bits 0x0020000000040000 pass 0 recheck 2/2
+    81.22 [     80.2s] cycles 16, coverage 116.3%, 82.62 GB/s, errors 22
+    81.62 [   80.501s] ERROR thread 10 cycle 1 (total 23) bits 0x0042000000040000 pass 0 recheck 2/2
+    91.13 [     90.1s] cycles 16, coverage 130.5%, 82.29 GB/s, errors 23
+    91.15 RESULT tester=memslammer errors=23 first_error_s=29.348 elapsed_s=90.029

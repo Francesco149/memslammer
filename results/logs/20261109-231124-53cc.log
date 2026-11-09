@@ -1,0 +1,7 @@
+# /root/msbench/memslammer -m 27374 -d 600.0 -s -M verify -r 20
+     0.12 memslammer verify: 27136 MB, 16 threads, block 16777216, rereads 20, pattern random, cache none, order seq, heat 0, yield 1
+    11.13 [     10.1s] cycles 16, coverage 125.2%, 74.74 GB/s, errors 0
+    21.15 [     20.1s] cycles 32, coverage 251.1%, 75.00 GB/s, errors 0
+    29.06 [     28.0s] cycles 48, coverage 349.6%, 74.46 GB/s, errors 1
+    29.06 [   27.913s] ERROR thread 2 cycle 3 (total 1) bits 0x0022000000000000 pass 0 recheck 2/2
+    29.07 RESULT tester=memslammer errors=1 first_error_s=27.913 elapsed_s=27.935

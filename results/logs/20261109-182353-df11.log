@@ -1,0 +1,465 @@
+# /root/msbench/memslammer -m 27387 -d 600.0 -M verify
+     0.13 memslammer verify: 27136 MB, 16 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1
+    11.14 [     10.1s] cycles 0, coverage 14.2%, 82.34 GB/s, errors 0
+    21.16 [     20.1s] cycles 0, coverage 28.3%, 82.59 GB/s, errors 0
+    31.17 [     30.1s] cycles 0, coverage 43.0%, 82.54 GB/s, errors 0
+    41.18 [     40.1s] cycles 0, coverage 57.5%, 82.53 GB/s, errors 0
+    51.19 [     50.1s] cycles 0, coverage 71.8%, 82.55 GB/s, errors 0
+    61.21 [     60.1s] cycles 0, coverage 86.2%, 82.53 GB/s, errors 0
+    62.61 [   61.456s] ERROR thread 3 cycle 0 (total 1) bits 0x0000000000060000
+    71.22 [     70.1s] cycles 16, coverage 100.8%, 82.53 GB/s, errors 1
+    81.23 [     80.2s] cycles 16, coverage 115.2%, 82.56 GB/s, errors 1
+    91.25 [     90.2s] cycles 16, coverage 129.7%, 82.58 GB/s, errors 1
+   101.26 [    100.2s] cycles 16, coverage 144.2%, 82.59 GB/s, errors 1
+   111.27 [    110.2s] cycles 16, coverage 158.5%, 82.59 GB/s, errors 1
+   111.37 [  110.197s] ERROR thread 7 cycle 1 (total 2) bits 0x0000000000060000
+   121.29 [    120.2s] cycles 16, coverage 173.2%, 82.59 GB/s, errors 2
+   131.30 [    130.2s] cycles 16, coverage 187.7%, 82.61 GB/s, errors 2
+   141.31 [    140.2s] cycles 32, coverage 202.1%, 82.62 GB/s, errors 2
+   151.33 [    150.2s] cycles 32, coverage 216.6%, 82.62 GB/s, errors 2
+   153.93 [  152.812s] ERROR thread 1 cycle 2 (total 3) bits 0x0000000000280000
+   161.34 [    160.3s] cycles 32, coverage 231.0%, 82.65 GB/s, errors 3
+   171.35 [    170.3s] cycles 32, coverage 245.6%, 82.62 GB/s, errors 3
+   181.37 [    180.3s] cycles 32, coverage 260.0%, 82.62 GB/s, errors 3
+   191.38 [    190.3s] cycles 32, coverage 274.5%, 82.62 GB/s, errors 3
+   192.68 [  191.554s] ERROR thread 0 cycle 2 (total 4) bits 0x0002000000020000
+   201.39 [    200.3s] cycles 32, coverage 289.0%, 82.63 GB/s, errors 4
+   208.50 [  207.356s] ERROR thread 11 cycle 3 (total 5) bits 0x0000000000410000
+   208.50 [  207.370s] ERROR thread 10 cycle 2 (total 6) bits 0x0000000000410000
+   208.70 [  207.599s] ERROR thread 9 cycle 2 (total 7) bits 0x0008000000200000
+   211.41 [    210.3s] cycles 48, coverage 303.5%, 82.62 GB/s, errors 7
+   221.42 [    220.3s] cycles 48, coverage 318.0%, 82.61 GB/s, errors 7
+   222.12 [  220.967s] ERROR thread 5 cycle 3 (total 8) bits 0x00000000001c0000
+   225.73 [  224.616s] ERROR thread 1 cycle 3 (total 9) bits 0x0080000000200000
+   228.43 [  227.294s] ERROR thread 13 cycle 3 (total 10) bits 0x0022000000440000
+   231.43 [    230.4s] cycles 48, coverage 332.6%, 82.63 GB/s, errors 10
+   241.45 [    240.4s] cycles 48, coverage 347.2%, 82.62 GB/s, errors 10
+   247.96 [  246.823s] ERROR thread 13 cycle 3 (total 11) bits 0x00000000001c0000
+   251.46 [    250.4s] cycles 48, coverage 361.7%, 82.61 GB/s, errors 11
+   254.57 [  253.451s] ERROR thread 12 cycle 3 (total 12) bits 0x00000000001c0000
+   254.57 [  253.457s] ERROR thread 12 cycle 3 (total 13) bits 0x0000000000c80000
+   257.17 [  256.012s] ERROR thread 2 cycle 3 (total 14) bits 0x0080000000c80000
+   259.87 [  258.712s] ERROR thread 8 cycle 3 (total 15) bits 0x0011000000200000
+   260.37 [  259.219s] ERROR thread 13 cycle 3 (total 16) bits 0x00000000001c0000
+   261.47 [    260.4s] cycles 48, coverage 376.3%, 82.63 GB/s, errors 16
+   264.88 [  263.723s] ERROR thread 0 cycle 3 (total 17) bits 0x0081000000020000
+   270.19 [  269.102s] ERROR thread 7 cycle 3 (total 18) bits 0x0005000000000000
+   270.89 [  269.739s] ERROR thread 7 cycle 3 (total 19) bits 0x0000000000830000
+   271.49 [    270.4s] cycles 48, coverage 391.0%, 82.62 GB/s, errors 19
+   275.99 [  274.901s] ERROR thread 12 cycle 3 (total 20) bits 0x0080000000800000
+   276.69 [  275.560s] ERROR thread 11 cycle 3 (total 21) bits 0x0020000000400000
+   276.70 [  275.596s] ERROR thread 10 cycle 3 (total 22) bits 0x0080000000100000
+   276.90 [  275.811s] ERROR thread 11 cycle 4 (total 23) bits 0x0000000000410000
+   277.00 [  275.830s] ERROR thread 11 cycle 4 (total 24) bits 0x00200000006c0000
+   277.00 [  275.850s] ERROR thread 5 cycle 4 (total 25) bits 0x0018000000040000
+   277.00 [  275.856s] ERROR thread 10 cycle 3 (total 26) bits 0x0000000000410000
+   277.10 [  275.996s] ERROR thread 5 cycle 4 (total 27) bits 0x0000000000440000
+   277.30 [  276.209s] ERROR thread 5 cycle 4 (total 28) bits 0x0080000000800000
+   277.40 [  276.254s] ERROR thread 4 cycle 3 (total 29) bits 0x0040000000040000
+   277.90 [  276.750s] ERROR thread 4 cycle 4 (total 30) bits 0x0000000000c80000
+   280.50 [  279.407s] ERROR thread 8 cycle 4 (total 31) bits 0x0040000000200000
+   281.50 [    280.4s] cycles 64, coverage 405.8%, 82.58 GB/s, errors 31
+   283.00 [  281.896s] ERROR thread 8 cycle 4 (total 32) bits 0x0000000000800000
+   291.52 [    290.4s] cycles 64, coverage 420.2%, 82.64 GB/s, errors 32
+   301.53 [    300.5s] cycles 64, coverage 434.8%, 82.61 GB/s, errors 32
+   302.63 [  301.551s] ERROR thread 8 cycle 4 (total 33) bits 0x0048000000800000
+   311.54 [    310.5s] cycles 64, coverage 449.2%, 82.63 GB/s, errors 33
+   317.05 [  315.876s] ERROR thread 10 cycle 4 (total 34) bits 0x0000000000c30000
+   319.15 [  318.055s] ERROR thread 8 cycle 4 (total 35) bits 0x0002000000040000
+   321.56 [    320.5s] cycles 64, coverage 463.9%, 82.61 GB/s, errors 35
+   324.16 [  323.066s] ERROR thread 13 cycle 4 (total 36) bits 0x001a000000000000
+   326.86 [  325.730s] ERROR thread 3 cycle 4 (total 37) bits 0x0080000000100000
+   327.76 [  326.596s] ERROR thread 8 cycle 4 (total 38) bits 0x0002000000040000
+   331.57 [    330.5s] cycles 64, coverage 478.5%, 82.63 GB/s, errors 38
+   333.57 [  332.396s] ERROR thread 7 cycle 4 (total 39) bits 0x0000000000600000
+   336.17 [  335.009s] ERROR thread 7 cycle 4 (total 40) bits 0x0000000000c80000
+   336.98 [  335.809s] ERROR thread 7 cycle 4 (total 41) bits 0x0002000000100000
+   337.78 [  336.692s] ERROR thread 7 cycle 4 (total 42) bits 0x0000000000240000
+   339.28 [  338.198s] ERROR thread 7 cycle 4 (total 43) bits 0x0000000000840000
+   340.28 [  339.178s] ERROR thread 7 cycle 4 (total 44) bits 0x00c80000009e0000
+   341.58 [    340.5s] cycles 64, coverage 493.2%, 82.60 GB/s, errors 44
+   342.78 [  341.613s] ERROR thread 14 cycle 4 (total 45) bits 0x0020000000c30000
+   342.88 [  341.795s] ERROR thread 7 cycle 4 (total 46) bits 0x0000000000840000
+   344.39 [  343.287s] ERROR thread 13 cycle 5 (total 47) bits 0x0000000000900000
+   344.39 [  343.308s] ERROR thread 12 cycle 4 (total 48) bits 0x0021000000100000
+   344.49 [  343.313s] ERROR thread 13 cycle 5 (total 49) bits 0x0021000000100000
+   344.49 [  343.315s] ERROR thread 12 cycle 4 (total 50) bits 0x0000000000040000
+   344.49 [  343.318s] ERROR thread 4 cycle 4 (total 51) bits 0x0000000000c80000
+   344.49 [  343.382s] ERROR thread 4 cycle 4 (total 52) bits 0x0080000000800000
+   344.49 [  343.396s] ERROR thread 12 cycle 5 (total 53) bits 0x0020000000400000
+   344.49 [  343.405s] ERROR thread 4 cycle 4 (total 54) bits 0x0000000000050000
+   344.59 [  343.425s] ERROR thread 11 cycle 5 (total 55) bits 0x0000000000410000
+   344.59 [  343.438s] ERROR thread 4 cycle 4 (total 56) bits 0x0000000000800000
+   344.59 [  343.468s] ERROR thread 11 cycle 5 (total 57) bits 0x0000000000410000
+   344.69 [  343.529s] ERROR thread 11 cycle 5 (total 58) bits 0x0000000000410000
+   344.69 [  343.581s] ERROR thread 10 cycle 4 (total 59) bits 0x0000000000440000
+   344.69 [  343.591s] ERROR thread 11 cycle 5 (total 60) bits 0x0000000000410000
+   344.79 [  343.686s] ERROR thread 3 cycle 4 (total 61) bits 0x0000000000840000
+   344.79 [  343.709s] ERROR thread 4 cycle 5 (total 62) bits 0x0000000000c80000
+   344.89 [  343.741s] ERROR thread 11 cycle 5 (total 63) bits 0x0000000000050000
+   344.89 [  343.780s] ERROR thread 11 cycle 5 (total 64) bits 0x0000000000410000
+   344.89 [  343.792s] ERROR thread 3 cycle 4 (total 65) bits 0x0008000000080000
+   344.99 [  343.909s] ERROR thread 10 cycle 4 (total 66) bits 0x0030000000010000
+   345.09 [  343.921s] ERROR thread 4 cycle 5 (total 67) bits 0x0000000000240000
+   345.09 [  343.926s] ERROR thread 3 cycle 4 (total 68) bits 0x0071000000360000
+   345.09 [  343.983s] ERROR thread 10 cycle 5 (total 69) bits 0x0002000000040000
+   345.09 [  343.995s] ERROR thread 9 cycle 4 (total 70) bits 0x0002000000020000
+   345.19 [  344.088s] ERROR thread 3 cycle 4 (total 71) bits 0x0088000000400000
+   345.29 [  344.118s] ERROR thread 3 cycle 5 (total 72) bits 0x0000000000090000
+   345.29 [  344.137s] ERROR thread 10 cycle 5 (total 73) bits 0x0081000000020000
+   345.29 [  344.169s] ERROR thread 2 cycle 4 (total 74) bits 0x0082000000010000
+   345.29 [  344.174s] ERROR thread 9 cycle 4 (total 75) bits 0x0002000000040000
+   345.29 [  344.187s] ERROR thread 3 cycle 5 (total 76) bits 0x0000000000800000
+   345.39 [  344.225s] ERROR thread 10 cycle 5 (total 77) bits 0x0081000000020000
+   345.49 [  344.367s] ERROR thread 15 cycle 4 (total 78) bits 0x0060000000000000
+   345.49 [  344.386s] ERROR thread 9 cycle 4 (total 79) bits 0x0008000000200000
+   345.59 [  344.429s] ERROR thread 3 cycle 5 (total 80) bits 0x0000000000c80000
+   345.59 [  344.455s] ERROR thread 10 cycle 5 (total 81) bits 0x00000000001c0000
+   345.79 [  344.648s] ERROR thread 3 cycle 5 (total 82) bits 0x0020000000020000
+   345.89 [  344.726s] ERROR thread 9 cycle 4 (total 83) bits 0x0060000000080000
+   345.89 [  344.782s] ERROR thread 3 cycle 5 (total 84) bits 0x0000000000800000
+   346.09 [  344.964s] ERROR thread 3 cycle 5 (total 85) bits 0x0000000000a00000
+   346.19 [  345.083s] ERROR thread 2 cycle 4 (total 86) bits 0x0000000000600000
+   346.39 [  345.311s] ERROR thread 15 cycle 4 (total 87) bits 0x0024000000060000
+   347.49 [  346.326s] ERROR thread 8 cycle 5 (total 88) bits 0x0000000000800000
+   347.79 [  346.701s] ERROR thread 12 cycle 5 (total 89) bits 0x0060000000000000
+   348.89 [  347.762s] ERROR thread 8 cycle 5 (total 90) bits 0x0000000000830000
+   349.79 [  348.682s] ERROR thread 1 cycle 5 (total 91) bits 0x0088000000400000
+   351.60 [    350.5s] cycles 80, coverage 509.8%, 82.51 GB/s, errors 91
+   361.61 [    360.5s] cycles 80, coverage 524.3%, 82.63 GB/s, errors 91
+   363.31 [  362.235s] ERROR thread 13 cycle 5 (total 92) bits 0x0000000000060000
+   367.32 [  366.155s] ERROR thread 13 cycle 5 (total 93) bits 0x0000000000310000
+   369.22 [  368.112s] ERROR thread 13 cycle 5 (total 94) bits 0x0000000000240000
+   369.32 [  368.193s] ERROR thread 15 cycle 5 (total 95) bits 0x0001000000000000
+   370.42 [  369.279s] ERROR thread 5 cycle 5 (total 96) bits 0x0088000000400000
+   371.62 [    370.5s] cycles 80, coverage 539.0%, 82.62 GB/s, errors 96
+   377.73 [  376.572s] ERROR thread 13 cycle 5 (total 97) bits 0x0000000000830000
+   381.64 [    380.6s] cycles 80, coverage 553.5%, 82.61 GB/s, errors 97
+   381.84 [  380.664s] ERROR thread 1 cycle 5 (total 98) bits 0x0000000000090000
+   382.74 [  381.601s] ERROR thread 12 cycle 5 (total 99) bits 0x0000000000440000
+   391.65 [    390.6s] cycles 80, coverage 568.1%, 82.61 GB/s, errors 99
+   391.95 [  390.828s] ERROR thread 12 cycle 5 (total 100) bits 0x0040000000040000
+   397.06 [  395.973s] ERROR thread 0 cycle 5 (total 101) bits 0x0080000000800000
+   399.76 [  398.590s] ERROR thread 15 cycle 5 (total 102) bits 0x0040000000400000
+   401.66 [    400.6s] cycles 80, coverage 582.7%, 82.61 GB/s, errors 102
+   401.76 [  400.659s] ERROR thread 7 cycle 5 (total 103) bits 0x0080000000040000
+   402.67 [  401.571s] ERROR thread 7 cycle 5 (total 104) bits 0x000c000000100000
+   404.97 [  403.800s] ERROR thread 7 cycle 5 (total 105) bits 0x0000000000900000
+   405.07 [  403.953s] ERROR thread 7 cycle 5 (total 106) bits 0x0040000000200000
+   405.57 [  404.438s] ERROR thread 7 cycle 5 (total 107) bits 0x0000000000240000
+   409.68 [  408.551s] ERROR thread 12 cycle 5 (total 108) bits 0x0020000000830000
+   409.68 [  408.577s] ERROR thread 13 cycle 6 (total 109) bits 0x0010000000800000
+   409.78 [  408.645s] ERROR thread 13 cycle 6 (total 110) bits 0x0000000000900000
+   409.78 [  408.691s] ERROR thread 12 cycle 5 (total 111) bits 0x0021000000100000
+   409.88 [  408.761s] ERROR thread 13 cycle 6 (total 112) bits 0x0000000000900000
+   409.88 [  408.769s] ERROR thread 12 cycle 5 (total 113) bits 0x0021000000100000
+   409.98 [  408.802s] ERROR thread 12 cycle 5 (total 114) bits 0x0000000000d40000
+   409.98 [  408.865s] ERROR thread 10 cycle 5 (total 115) bits 0x0000000000440000
+   409.98 [  408.871s] ERROR thread 11 cycle 6 (total 116) bits 0x00000000001c0000
+   409.98 [  408.875s] ERROR thread 10 cycle 5 (total 117) bits 0x0020000000400000
+   410.08 [  408.935s] ERROR thread 10 cycle 5 (total 118) bits 0x0000000000440000
+   410.18 [  409.033s] ERROR thread 10 cycle 5 (total 119) bits 0x0000000000410000
+   410.18 [  409.038s] ERROR thread 9 cycle 5 (total 120) bits 0x0008000000200000
+   410.28 [  409.115s] ERROR thread 10 cycle 6 (total 121) bits 0x0081000000020000
+   410.38 [  409.236s] ERROR thread 10 cycle 6 (total 122) bits 0x0088000000400000
+   410.48 [  409.315s] ERROR thread 9 cycle 5 (total 123) bits 0x0020000000080000
+   410.48 [  409.318s] ERROR thread 10 cycle 6 (total 124) bits 0x0008000000080000
+   410.48 [  409.324s] ERROR thread 10 cycle 6 (total 125) bits 0x0000000000c80000
+   410.48 [  409.364s] ERROR thread 9 cycle 5 (total 126) bits 0x0008000000200000
+   410.48 [  409.396s] ERROR thread 9 cycle 5 (total 127) bits 0x0008000000200000
+   410.58 [  409.495s] ERROR thread 10 cycle 6 (total 128) bits 0x00000000001c0000
+   410.78 [  409.644s] ERROR thread 7 cycle 5 (total 129) bits 0x0000000000240000
+   410.78 [  409.675s] ERROR thread 10 cycle 6 (total 130) bits 0x0008000000020000
+   410.98 [  409.812s] ERROR thread 9 cycle 5 (total 131) bits 0x0002000000040000
+   411.08 [  409.945s] ERROR thread 9 cycle 5 (total 132) bits 0x0008000000200000
+   411.18 [  410.026s] ERROR thread 9 cycle 5 (total 133) bits 0x0008000000200000
+   411.18 [  410.082s] ERROR thread 9 cycle 5 (total 134) bits 0x0008000000200000
+   411.68 [  410.561s] ERROR thread 3 cycle 6 (total 135) bits 0x0000000000600000
+   411.68 [  410.587s] ERROR thread 3 cycle 6 (total 136) bits 0x0004000000400000
+   411.68 [  410.590s] ERROR thread 2 cycle 5 (total 137) bits 0x0000000000600000
+   411.68 [    410.6s] cycles 87, coverage 598.8%, 82.52 GB/s, errors 137
+   411.88 [  410.786s] ERROR thread 3 cycle 6 (total 138) bits 0x0001000000400000
+   411.98 [  410.836s] ERROR thread 3 cycle 6 (total 139) bits 0x0003000000800000
+   411.98 [  410.865s] ERROR thread 2 cycle 5 (total 140) bits 0x0020000000020000
+   411.98 [  410.875s] ERROR thread 2 cycle 5 (total 141) bits 0x0000000000600000
+   412.08 [  410.911s] ERROR thread 3 cycle 6 (total 142) bits 0x0000000000800000
+   412.08 [  410.940s] ERROR thread 3 cycle 6 (total 143) bits 0x0000000000800000
+   412.18 [  411.086s] ERROR thread 3 cycle 6 (total 144) bits 0x003b000000c80000
+   412.28 [  411.183s] ERROR thread 3 cycle 6 (total 145) bits 0x0000000000800000
+   412.38 [  411.213s] ERROR thread 3 cycle 6 (total 146) bits 0x0004000000400000
+   412.58 [  411.415s] ERROR thread 2 cycle 5 (total 147) bits 0x0044000000000000
+   412.58 [  411.467s] ERROR thread 3 cycle 6 (total 148) bits 0x0003000000800000
+   412.58 [  411.473s] ERROR thread 2 cycle 5 (total 149) bits 0x0000000000600000
+   412.68 [  411.562s] ERROR thread 3 cycle 6 (total 150) bits 0x0000000000a00000
+   412.68 [  411.574s] ERROR thread 2 cycle 5 (total 151) bits 0x0000000000600000
+   415.69 [  414.541s] ERROR thread 8 cycle 6 (total 152) bits 0x0000000000050000
+   415.79 [  414.656s] ERROR thread 1 cycle 6 (total 153) bits 0x0000000000280000
+   415.89 [  414.726s] ERROR thread 8 cycle 6 (total 154) bits 0x0000000000240000
+   416.29 [  415.129s] ERROR thread 8 cycle 6 (total 155) bits 0x0000000000840000
+   416.79 [  415.624s] ERROR thread 8 cycle 6 (total 156) bits 0x0000000000840000
+   417.09 [  415.967s] ERROR thread 8 cycle 6 (total 157) bits 0x0000000000050000
+   417.19 [  416.078s] ERROR thread 8 cycle 6 (total 158) bits 0x0000000000830000
+   417.79 [  416.685s] ERROR thread 11 cycle 6 (total 159) bits 0x0008000000080000
+   419.99 [  418.888s] ERROR thread 10 cycle 6 (total 160) bits 0x0040000000020000
+   421.69 [    420.6s] cycles 96, coverage 614.2%, 82.56 GB/s, errors 160
+   422.29 [  421.171s] ERROR thread 13 cycle 6 (total 161) bits 0x00000000001c0000
+   431.71 [    430.6s] cycles 96, coverage 628.8%, 82.60 GB/s, errors 161
+   434.31 [  433.138s] ERROR thread 0 cycle 6 (total 162) bits 0x0000000000060000
+   436.01 [  434.875s] ERROR thread 13 cycle 6 (total 163) bits 0x0000000000310000
+   441.72 [    440.6s] cycles 96, coverage 643.2%, 82.62 GB/s, errors 163
+   444.72 [  443.582s] ERROR thread 7 cycle 6 (total 164) bits 0x0080000000000000
+   447.93 [  446.841s] ERROR thread 7 cycle 6 (total 165) bits 0x00c1000000480000
+   450.33 [  449.172s] ERROR thread 14 cycle 6 (total 166) bits 0x00a2000000640000
+   451.73 [    450.7s] cycles 96, coverage 658.0%, 82.61 GB/s, errors 166
+   458.54 [  457.432s] ERROR thread 0 cycle 6 (total 167) bits 0x00a0000000000000
+   461.25 [  460.119s] ERROR thread 10 cycle 6 (total 168) bits 0x0001000000010000
+   461.75 [    460.7s] cycles 96, coverage 672.5%, 82.61 GB/s, errors 168
+   465.15 [  464.017s] ERROR thread 0 cycle 6 (total 169) bits 0x0044000000440000
+   467.15 [  466.008s] ERROR thread 3 cycle 6 (total 170) bits 0x005b000000120000
+   467.15 [  466.069s] ERROR thread 7 cycle 6 (total 171) bits 0x0040000000200000
+   468.06 [  466.950s] ERROR thread 9 cycle 6 (total 172) bits 0x0008000000200000
+   468.46 [  467.293s] ERROR thread 7 cycle 6 (total 173) bits 0x0002000000020000
+   468.56 [  467.428s] ERROR thread 7 cycle 6 (total 174) bits 0x0000000000800000
+   469.06 [  467.904s] ERROR thread 7 cycle 6 (total 175) bits 0x0000000000240000
+   470.36 [  469.258s] ERROR thread 7 cycle 6 (total 176) bits 0x0040000000040000
+   471.66 [  470.546s] ERROR thread 15 cycle 6 (total 177) bits 0x0027000000d40000
+   471.66 [  470.568s] ERROR thread 7 cycle 6 (total 178) bits 0x0000000000200000
+   471.76 [    470.7s] cycles 96, coverage 687.4%, 82.60 GB/s, errors 178
+   472.66 [  471.564s] ERROR thread 7 cycle 6 (total 179) bits 0x0000000000840000
+   473.26 [  472.111s] ERROR thread 7 cycle 6 (total 180) bits 0x0040000000200000
+   473.67 [  472.543s] ERROR thread 10 cycle 6 (total 181) bits 0x0000000000410000
+   473.96 [  472.880s] ERROR thread 7 cycle 6 (total 182) bits 0x0040000000200000
+   474.36 [  473.235s] ERROR thread 10 cycle 7 (total 183) bits 0x0002000000040000
+   474.37 [  473.258s] ERROR thread 10 cycle 7 (total 184) bits 0x0008000000200000
+   474.37 [  473.258s] ERROR thread 3 cycle 7 (total 185) bits 0x0004000000200000
+   474.46 [  473.329s] ERROR thread 9 cycle 6 (total 186) bits 0x0002000000040000
+   474.47 [  473.353s] ERROR thread 10 cycle 7 (total 187) bits 0x0006000000200000
+   474.47 [  473.372s] ERROR thread 10 cycle 7 (total 188) bits 0x00000000001c0000
+   474.47 [  473.384s] ERROR thread 9 cycle 6 (total 189) bits 0x0008000000200000
+   474.57 [  473.424s] ERROR thread 2 cycle 6 (total 190) bits 0x0020000000020000
+   474.57 [  473.445s] ERROR thread 3 cycle 7 (total 191) bits 0x0000000000a00000
+   474.57 [  473.450s] ERROR thread 9 cycle 6 (total 192) bits 0x0008000000200000
+   474.57 [  473.475s] ERROR thread 3 cycle 7 (total 193) bits 0x0000000000a00000
+   474.67 [  473.580s] ERROR thread 2 cycle 6 (total 194) bits 0x0022000000000000
+   474.77 [  473.590s] ERROR thread 3 cycle 7 (total 195) bits 0x0000000000a00000
+   474.77 [  473.610s] ERROR thread 3 cycle 7 (total 196) bits 0x0000000000800000
+   474.77 [  473.623s] ERROR thread 2 cycle 6 (total 197) bits 0x0000000000600000
+   474.77 [  473.665s] ERROR thread 3 cycle 7 (total 198) bits 0x0000000000a00000
+   474.77 [  473.681s] ERROR thread 10 cycle 7 (total 199) bits 0x0000000000830000
+   474.87 [  473.702s] ERROR thread 9 cycle 6 (total 200) bits 0x0002000000040000
+   474.87 [  473.728s] ERROR thread 9 cycle 6 (total 201) bits 0x0008000000200000
+   474.87 [  473.739s] ERROR thread 10 cycle 7 (total 202) bits 0x0080000000800000
+   474.97 [  473.808s] ERROR thread 2 cycle 6 (total 203) bits 0x0000000000600000
+   475.17 [  474.043s] ERROR thread 9 cycle 6 (total 204) bits 0x0020000000080000
+   475.17 [  474.051s] ERROR thread 2 cycle 6 (total 205) bits 0x0020000000020000
+   475.17 [  474.057s] ERROR thread 3 cycle 7 (total 206) bits 0x0003000000800000
+   475.27 [  474.116s] ERROR thread 3 cycle 7 (total 207) bits 0x0000000000a00000
+   475.27 [  474.154s] ERROR thread 9 cycle 6 (total 208) bits 0x0002000000040000
+   475.37 [  474.202s] ERROR thread 3 cycle 7 (total 209) bits 0x0000000000800000
+   475.37 [  474.237s] ERROR thread 2 cycle 6 (total 210) bits 0x0000000000600000
+   475.37 [  474.251s] ERROR thread 3 cycle 7 (total 211) bits 0x0001000000400000
+   475.47 [  474.367s] ERROR thread 3 cycle 7 (total 212) bits 0x0000000000a00000
+   475.57 [  474.396s] ERROR thread 10 cycle 7 (total 213) bits 0x0000000000500000
+   475.57 [  474.471s] ERROR thread 2 cycle 6 (total 214) bits 0x0000000000600000
+   475.67 [  474.567s] ERROR thread 3 cycle 7 (total 215) bits 0x0000000000a00000
+   475.77 [  474.620s] ERROR thread 12 cycle 6 (total 216) bits 0x0018000000040000
+   475.77 [  474.669s] ERROR thread 13 cycle 7 (total 217) bits 0x0030000000080000
+   475.87 [  474.714s] ERROR thread 13 cycle 7 (total 218) bits 0x0021000000100000
+   475.87 [  474.720s] ERROR thread 13 cycle 7 (total 219) bits 0x0000000000900000
+   475.87 [  474.741s] ERROR thread 3 cycle 7 (total 220) bits 0x0020000000a20000
+   475.87 [  474.747s] ERROR thread 12 cycle 6 (total 221) bits 0x0030000000010000
+   475.87 [  474.770s] ERROR thread 12 cycle 6 (total 222) bits 0x0014000000080000
+   475.87 [  474.784s] ERROR thread 3 cycle 7 (total 223) bits 0x0000000000a00000
+   475.87 [  474.786s] ERROR thread 12 cycle 6 (total 224) bits 0x0021000000100000
+   475.97 [  474.797s] ERROR thread 3 cycle 7 (total 225) bits 0x0000000000c80000
+   475.97 [  474.817s] ERROR thread 12 cycle 6 (total 226) bits 0x0000000000900000
+   475.97 [  474.817s] ERROR thread 3 cycle 7 (total 227) bits 0x0001000000400000
+   475.97 [  474.819s] ERROR thread 10 cycle 7 (total 228) bits 0x0005000000000000
+   475.97 [  474.838s] ERROR thread 13 cycle 7 (total 229) bits 0x0000000000f60000
+   475.97 [  474.850s] ERROR thread 12 cycle 6 (total 230) bits 0x0081000000020000
+   475.97 [  474.882s] ERROR thread 10 cycle 7 (total 231) bits 0x0088000000400000
+   476.07 [  474.979s] ERROR thread 3 cycle 7 (total 232) bits 0x0000000000a00000
+   476.17 [  475.011s] ERROR thread 3 cycle 7 (total 233) bits 0x0000000000800000
+   476.17 [  475.026s] ERROR thread 9 cycle 6 (total 234) bits 0x0020000000080000
+   476.17 [  475.073s] ERROR thread 3 cycle 7 (total 235) bits 0x0000000000c80000
+   476.17 [  475.087s] ERROR thread 2 cycle 6 (total 236) bits 0x0048000000800000
+   476.37 [  475.252s] ERROR thread 11 cycle 6 (total 237) bits 0x0014000000080000
+   476.37 [  475.272s] ERROR thread 3 cycle 7 (total 238) bits 0x0003000000800000
+   476.47 [  475.306s] ERROR thread 12 cycle 7 (total 239) bits 0x0030000000010000
+   476.47 [  475.349s] ERROR thread 11 cycle 6 (total 240) bits 0x0020000000200000
+   476.57 [  475.402s] ERROR thread 3 cycle 7 (total 241) bits 0x0000000000a00000
+   476.57 [  475.441s] ERROR thread 3 cycle 7 (total 242) bits 0x0001000000400000
+   476.67 [  475.534s] ERROR thread 3 cycle 7 (total 243) bits 0x0000000000600000
+   476.77 [  475.660s] ERROR thread 3 cycle 7 (total 244) bits 0x0004000000400000
+   476.97 [  475.833s] ERROR thread 3 cycle 7 (total 245) bits 0x0000000000a00000
+   478.67 [  477.503s] ERROR thread 15 cycle 6 (total 246) bits 0x0000000000c80000
+   481.78 [    480.7s] cycles 106, coverage 704.8%, 82.47 GB/s, errors 246
+   482.38 [  481.255s] ERROR thread 8 cycle 7 (total 247) bits 0x0000000000240000
+   482.68 [  481.502s] ERROR thread 8 cycle 7 (total 248) bits 0x0000000000240000
+   484.28 [  483.179s] ERROR thread 8 cycle 7 (total 249) bits 0x0000000000310000
+   484.58 [  483.437s] ERROR thread 8 cycle 7 (total 250) bits 0x0000000000240000
+   484.88 [  483.709s] ERROR thread 8 cycle 7 (total 251) bits 0x0000000000240000
+   491.79 [    490.7s] cycles 112, coverage 719.5%, 82.59 GB/s, errors 251
+   496.10 [  494.939s] ERROR thread 1 cycle 7 (total 252) bits 0x00f3000000f30000
+   498.10 [  497.001s] ERROR thread 13 cycle 7 (total 253) bits 0x00000000001c0000
+   499.60 [  498.434s] ERROR thread 6 cycle 7 (total 254) bits 0x0088000000400000
+   501.80 [    500.7s] cycles 112, coverage 734.1%, 82.60 GB/s, errors 254
+   508.51 [  507.352s] ERROR thread 3 cycle 7 (total 255) bits 0x0000000000c80000
+   511.82 [    510.7s] cycles 112, coverage 748.6%, 82.58 GB/s, errors 255
+   521.83 [    520.8s] cycles 112, coverage 763.1%, 82.60 GB/s, errors 255
+   525.63 [  524.557s] ERROR thread 10 cycle 7 (total 256) bits 0x0000000000980000
+   527.84 [  526.689s] ERROR thread 12 cycle 7 (total 257) bits 0x0088000000c30000
+   529.64 [  528.529s] ERROR thread 3 cycle 8 (total 258) bits 0x0000000000800000
+   530.44 [  529.333s] ERROR thread 12 cycle 7 (total 259) bits 0x00630000000a0000
+   531.84 [    530.8s] cycles 113, coverage 777.8%, 82.58 GB/s, errors 259
+   532.35 [  531.226s] ERROR thread 3 cycle 8 (total 260) bits 0x0000000000a00000
+   532.64 [  531.510s] ERROR thread 3 cycle 8 (total 261) bits 0x0030000000010000
+   532.74 [  531.588s] ERROR thread 3 cycle 8 (total 262) bits 0x0000000000a00000
+   532.74 [  531.624s] ERROR thread 3 cycle 8 (total 263) bits 0x0000000000a00000
+   532.95 [  531.776s] ERROR thread 3 cycle 8 (total 264) bits 0x0000000000800000
+   532.95 [  531.808s] ERROR thread 2 cycle 7 (total 265) bits 0x0000000000040000
+   532.95 [  531.859s] ERROR thread 2 cycle 7 (total 266) bits 0x0000000000c80000
+   532.95 [  531.868s] ERROR thread 3 cycle 8 (total 267) bits 0x0000000000a00000
+   533.05 [  531.886s] ERROR thread 2 cycle 7 (total 268) bits 0x0020000000020000
+   533.05 [  531.898s] ERROR thread 3 cycle 8 (total 269) bits 0x0003000000800000
+   533.05 [  531.937s] ERROR thread 3 cycle 8 (total 270) bits 0x0000000000c80000
+   533.25 [  532.104s] ERROR thread 3 cycle 8 (total 271) bits 0x0000000000800000
+   533.25 [  532.169s] ERROR thread 2 cycle 7 (total 272) bits 0x00a0000000000000
+   533.35 [  532.215s] ERROR thread 3 cycle 8 (total 273) bits 0x0000000000a00000
+   533.35 [  532.251s] ERROR thread 3 cycle 8 (total 274) bits 0x0000000000a00000
+   533.35 [  532.273s] ERROR thread 3 cycle 8 (total 275) bits 0x0000000000a00000
+   533.45 [  532.348s] ERROR thread 3 cycle 8 (total 276) bits 0x0020000000400000
+   533.55 [  532.413s] ERROR thread 3 cycle 8 (total 277) bits 0x0000000000600000
+   533.65 [  532.554s] ERROR thread 3 cycle 8 (total 278) bits 0x0000000000a00000
+   533.65 [  532.561s] ERROR thread 3 cycle 8 (total 279) bits 0x0000000000800000
+   533.75 [  532.577s] ERROR thread 3 cycle 8 (total 280) bits 0x0021000000100000
+   533.75 [  532.593s] ERROR thread 2 cycle 7 (total 281) bits 0x0000000000600000
+   533.75 [  532.597s] ERROR thread 3 cycle 8 (total 282) bits 0x0000000000a00000
+   533.75 [  532.620s] ERROR thread 3 cycle 8 (total 283) bits 0x0020000000020000
+   533.85 [  532.701s] ERROR thread 3 cycle 8 (total 284) bits 0x0014000000080000
+   533.85 [  532.756s] ERROR thread 7 cycle 7 (total 285) bits 0x0020000000040000
+   533.85 [  532.773s] ERROR thread 2 cycle 7 (total 286) bits 0x0020000000020000
+   534.35 [  533.200s] ERROR thread 7 cycle 7 (total 287) bits 0x0006000000000000
+   535.05 [  533.957s] ERROR thread 7 cycle 7 (total 288) bits 0x0000000000240000
+   535.15 [  534.029s] ERROR thread 14 cycle 7 (total 289) bits 0x0080000000600000
+   535.26 [  534.121s] ERROR thread 7 cycle 7 (total 290) bits 0x0080000000040000
+   535.26 [  534.127s] ERROR thread 7 cycle 7 (total 291) bits 0x0000000000830000
+   535.45 [  534.286s] ERROR thread 7 cycle 7 (total 292) bits 0x0000000000900000
+   535.45 [  534.299s] ERROR thread 7 cycle 7 (total 293) bits 0x0006000000000000
+   536.06 [  534.965s] ERROR thread 7 cycle 7 (total 294) bits 0x0040000000a40000
+   536.66 [  535.575s] ERROR thread 7 cycle 7 (total 295) bits 0x0042000000000000
+   537.16 [  536.001s] ERROR thread 7 cycle 7 (total 296) bits 0x0040000000200000
+   538.26 [  537.144s] ERROR thread 7 cycle 7 (total 297) bits 0x0000000000c80000
+   538.96 [  537.857s] ERROR thread 9 cycle 7 (total 298) bits 0x0008000000200000
+   538.96 [  537.864s] ERROR thread 9 cycle 7 (total 299) bits 0x0008000000080000
+   539.06 [  537.906s] ERROR thread 9 cycle 7 (total 300) bits 0x0008000000200000
+   539.06 [  537.913s] ERROR thread 10 cycle 8 (total 301) bits 0x00b1000000030000
+   539.06 [  537.942s] ERROR thread 10 cycle 8 (total 302) bits 0x0082000000010000
+   539.16 [  538.035s] ERROR thread 9 cycle 7 (total 303) bits 0x0080000000420000
+   539.16 [  538.047s] ERROR thread 10 cycle 8 (total 304) bits 0x0008000000200000
+   539.26 [  538.116s] ERROR thread 9 cycle 7 (total 305) bits 0x0008000000200000
+   539.26 [  538.135s] ERROR thread 10 cycle 8 (total 306) bits 0x0000000000410000
+   539.37 [  538.241s] ERROR thread 10 cycle 8 (total 307) bits 0x0000000000c80000
+   539.37 [  538.282s] ERROR thread 9 cycle 7 (total 308) bits 0x0008000000200000
+   539.47 [  538.316s] ERROR thread 7 cycle 7 (total 309) bits 0x0000000000830000
+   539.47 [  538.330s] ERROR thread 10 cycle 8 (total 310) bits 0x0080000000200000
+   539.57 [  538.447s] ERROR thread 10 cycle 8 (total 311) bits 0x0088000000400000
+   539.87 [  538.729s] ERROR thread 9 cycle 7 (total 312) bits 0x0008000000200000
+   539.87 [  538.750s] ERROR thread 10 cycle 8 (total 313) bits 0x0002000000000000
+   539.87 [  538.752s] ERROR thread 9 cycle 7 (total 314) bits 0x0008000000080000
+   539.87 [  538.763s] ERROR thread 10 cycle 8 (total 315) bits 0x0005000000000000
+   539.97 [  538.882s] ERROR thread 10 cycle 8 (total 316) bits 0x0080000000200000
+   540.07 [  538.898s] ERROR thread 9 cycle 7 (total 317) bits 0x0008000000200000
+   540.07 [  538.924s] ERROR thread 9 cycle 7 (total 318) bits 0x0008000000200000
+   540.17 [  539.015s] ERROR thread 10 cycle 8 (total 319) bits 0x0000000000310000
+   541.87 [  540.707s] ERROR thread 12 cycle 7 (total 320) bits 0x0014000000080000
+   541.87 [  540.771s] ERROR thread 13 cycle 8 (total 321) bits 0x0021000000100000
+   541.87 [  540.778s] ERROR thread 12 cycle 7 (total 322) bits 0x0000000000840000[    540.8s] cycles 117, coverage 795.1%, 82.47 GB/s, errors 322
+   541.87 
+   541.97 [  540.807s] ERROR thread 12 cycle 7 (total 323) bits 0x0021000000100000
+   541.97 [  540.817s] ERROR thread 12 cycle 7 (total 324) bits 0x0021000000100000
+   542.07 [  540.957s] ERROR thread 0 cycle 7 (total 325) bits 0x0049000000c00000
+   543.37 [  542.200s] ERROR thread 5 cycle 7 (total 326) bits 0x0000000000900000
+   544.18 [  543.070s] ERROR thread 12 cycle 8 (total 327) bits 0x00000000001c0000
+   544.28 [  543.142s] ERROR thread 12 cycle 8 (total 328) bits 0x0001000000400000
+   544.28 [  543.174s] ERROR thread 11 cycle 7 (total 329) bits 0x0020000000400000
+   544.38 [  543.208s] ERROR thread 12 cycle 8 (total 330) bits 0x001e000000180000
+   544.38 [  543.251s] ERROR thread 12 cycle 8 (total 331) bits 0x0020000000400000
+   544.58 [  543.426s] ERROR thread 12 cycle 8 (total 332) bits 0x0020000000400000
+   544.68 [  543.536s] ERROR thread 12 cycle 8 (total 333) bits 0x0020000000400000
+   544.68 [  543.586s] ERROR thread 12 cycle 8 (total 334) bits 0x0014000000080000
+   544.68 [  543.603s] ERROR thread 11 cycle 7 (total 335) bits 0x0010000000000000
+   546.68 [  545.536s] ERROR thread 0 cycle 7 (total 336) bits 0x0014000000080000
+   548.99 [  547.834s] ERROR thread 3 cycle 8 (total 337) bits 0x0002000000200000
+   549.99 [  548.827s] ERROR thread 8 cycle 8 (total 338) bits 0x0000000000840000
+   550.49 [  549.407s] ERROR thread 5 cycle 8 (total 339) bits 0x0000000000050000
+   550.49 [  549.410s] ERROR thread 4 cycle 7 (total 340) bits 0x0005000000000000
+   551.79 [  550.712s] ERROR thread 8 cycle 8 (total 341) bits 0x0000000000240000
+   551.89 [    550.8s] cycles 125, coverage 810.6%, 82.53 GB/s, errors 342
+   551.89 [  550.753s] ERROR thread 8 cycle 8 (total 342) bits 0x0000000000830000
+   552.39 [  551.291s] ERROR thread 8 cycle 8 (total 343) bits 0x0000000000240000
+   552.49 [  551.366s] ERROR thread 4 cycle 8 (total 344) bits 0x0090000000000000
+   552.70 [  551.606s] ERROR thread 0 cycle 8 (total 345) bits 0x0002000000040000
+   552.80 [  551.700s] ERROR thread 8 cycle 8 (total 346) bits 0x0000000000240000
+   558.00 [  556.872s] ERROR thread 1 cycle 8 (total 347) bits 0x0030000000010000
+   559.01 [  557.884s] ERROR thread 4 cycle 8 (total 348) bits 0x0000000000c80000
+   561.91 [    560.8s] cycles 128, coverage 825.3%, 82.58 GB/s, errors 348
+   562.31 [  561.232s] ERROR thread 10 cycle 8 (total 349) bits 0x00ca000000080000
+   564.11 [  562.946s] ERROR thread 3 cycle 8 (total 350) bits 0x0018000000040000
+   566.32 [  565.169s] ERROR thread 15 cycle 8 (total 351) bits 0x0018000000040000
+   570.22 [  569.092s] ERROR thread 10 cycle 8 (total 352) bits 0x0080000000800000
+   571.92 [    570.8s] cycles 128, coverage 839.9%, 82.60 GB/s, errors 353
+   571.93 [  570.781s] ERROR thread 13 cycle 8 (total 353) bits 0x00000000001c0000
+   573.23 [  572.092s] ERROR thread 13 cycle 8 (total 354) bits 0x0090000000330000
+   580.74 [  579.607s] ERROR thread 0 cycle 8 (total 355) bits 0x0000000000830000
+   581.94 [    580.9s] cycles 128, coverage 854.5%, 82.57 GB/s, errors 355
+   582.84 [  581.699s] ERROR thread 14 cycle 8 (total 356) bits 0x00c0000000080000
+   583.14 [  582.053s] ERROR thread 9 cycle 8 (total 357) bits 0x000a000000000000
+   583.74 [  582.612s] ERROR thread 3 cycle 8 (total 358) bits 0x0080000000040000
+   585.24 [  584.098s] ERROR thread 3 cycle 9 (total 359) bits 0x0000000000800000
+   588.76 [  587.665s] ERROR thread 6 cycle 8 (total 360) bits 0x0000000000840000
+   591.96 [    590.9s] cycles 129, coverage 869.3%, 82.58 GB/s, errors 360
+   592.06 [  590.953s] ERROR thread 6 cycle 8 (total 361) bits 0x0011000000200000
+   593.76 [  592.643s] ERROR thread 10 cycle 8 (total 362) bits 0x0081000000020000
+   594.16 [  593.027s] ERROR thread 13 cycle 8 (total 363) bits 0x008a000000450000
+   595.76 [  594.612s] ERROR thread 10 cycle 8 (total 364) bits 0x0000000000410000
+   595.86 [  594.695s] ERROR thread 8 cycle 8 (total 365) bits 0x0008000000010000
+   598.67 [  597.580s] ERROR thread 7 cycle 8 (total 366) bits 0x0006000000000000
+   599.37 [  598.211s] ERROR thread 7 cycle 8 (total 367) bits 0x0040000000200000
+   599.37 [  598.261s] ERROR thread 2 cycle 8 (total 368) bits 0x0000000000600000
+   599.37 [  598.283s] ERROR thread 7 cycle 8 (total 369) bits 0x0002000000080000
+   599.47 [  598.352s] ERROR thread 2 cycle 8 (total 370) bits 0x0040000000500000
+   599.47 [  598.362s] ERROR thread 2 cycle 8 (total 371) bits 0x0020000000200000
+   599.47 [  598.363s] ERROR thread 3 cycle 9 (total 372) bits 0x0000000000900000
+   599.47 [  598.372s] ERROR thread 2 cycle 8 (total 373) bits 0x0020000000400000
+   599.47 [  598.376s] ERROR thread 3 cycle 9 (total 374) bits 0x0003000000800000
+   599.57 [  598.467s] ERROR thread 3 cycle 9 (total 375) bits 0x0000000000090000
+   599.67 [  598.547s] ERROR thread 9 cycle 8 (total 376) bits 0x0002000000040000
+   599.67 [  598.551s] ERROR thread 10 cycle 9 (total 377) bits 0x0088000000400000
+   599.67 [  598.558s] ERROR thread 10 cycle 9 (total 378) bits 0x0011000000200000
+   599.67 [  598.564s] ERROR thread 9 cycle 8 (total 379) bits 0x0008000000200000
+   599.67 [  598.577s] ERROR thread 10 cycle 9 (total 380) bits 0x0008000000200000
+   599.77 [  598.665s] ERROR thread 10 cycle 9 (total 381) bits 0x0000000000410000
+   599.77 [  598.686s] ERROR thread 9 cycle 8 (total 382) bits 0x0008000000200000
+   599.87 [  598.763s] ERROR thread 10 cycle 9 (total 383) bits 0x0002000000200000
+   599.97 [  598.862s] ERROR thread 9 cycle 8 (total 384) bits 0x0005000000000000
+   600.07 [  598.909s] ERROR thread 10 cycle 9 (total 385) bits 0x0080000000200000
+   600.07 [  598.921s] ERROR thread 9 cycle 8 (total 386) bits 0x0002000000040000
+   600.07 [  598.949s] ERROR thread 10 cycle 9 (total 387) bits 0x0002000000200000
+   600.17 [  599.010s] ERROR thread 9 cycle 8 (total 388) bits 0x0008000000200000
+   600.27 [  599.107s] ERROR thread 7 cycle 8 (total 389) bits 0x0000000000c80000
+   600.27 [  599.185s] ERROR thread 9 cycle 8 (total 390) bits 0x0002000000040000
+   600.27 [  599.195s] ERROR thread 9 cycle 8 (total 391) bits 0x0008000000200000
+   600.37 [  599.294s] ERROR thread 10 cycle 9 (total 392) bits 0x0002000000040000
+   600.47 [  599.306s] ERROR thread 9 cycle 8 (total 393) bits 0x0020000000080000
+   600.47 [  599.329s] ERROR thread 7 cycle 8 (total 394) bits 0x0040000000200000
+   600.57 [  599.403s] ERROR thread 9 cycle 8 (total 395) bits 0x0008000000200000
+   600.57 [  599.445s] ERROR thread 9 cycle 8 (total 396) bits 0x0008000000200000
+   600.57 [  599.457s] ERROR thread 10 cycle 9 (total 397) bits 0x0000000000c80000
+   600.57 [  599.474s] ERROR thread 9 cycle 8 (total 398) bits 0x0008000000200000
+   600.57 [  599.497s] ERROR thread 9 cycle 8 (total 399) bits 0x0008000000200000
+   600.67 [  599.534s] ERROR thread 7 cycle 8 (total 400) bits 0x0006000000050000
+   600.67 [  599.579s] ERROR thread 9 cycle 8 (total 401) bits 0x0002000000040000
+   600.97 [  599.801s] ERROR thread 7 cycle 8 (total 402) bits 0x0040000000200000
+   601.18 [    600.0s] cycles 131, coverage 884.5%, 82.49 GB/s, errors 402
+   601.18 RESULT tester=memslammer errors=402 first_error_s=61.456 elapsed_s=600.040
