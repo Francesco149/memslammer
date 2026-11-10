@@ -223,7 +223,7 @@ static inline void put(v256 *p, v256 v, int op)
 }
 
 /* Generate (fill) or check (xor-accumulate) one block. pages = block / 4096. */
-static void gen_block(v256 *blk, u64 bytes, u64 first_page, const rng_t *seed_rng, int op, v256 *acc,
+static void gen_block(v256 *blk, u64 bytes, u64 first_page, const rng_t *seed_rng, int op, u64 *acc,
                       int pattern, int cache, int heat_iters)
 {
     const int check = op == OP_CHECK;
@@ -271,14 +271,14 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, const rng_t *seed_rn
             }
         }
     }
-    if (check) *acc = a;
+    if (check) _mm256_storeu_si256((v256 *)acc, a);
     else if (op == OP_FILL_NT) _mm_sfence();
 }
 
 /* Random data seeded per 4 KiB page, so pages can be filled and checked in any
  * order. Pass k visits page (k_mul * i + k_add) mod npages for i = 0..npages-1;
  * k_mul is odd and npages a power of two, so that is a permutation. */
-static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, int op, v256 *acc,
+static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, int op, u64 *acc,
                       int heat_iters)
 {
     const int check = op == OP_CHECK;
@@ -296,7 +296,7 @@ static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, in
         }
         heat(heat_iters);
     }
-    if (check) *acc = a;
+    if (check) _mm256_storeu_si256((v256 *)acc, a);
     else if (op == OP_FILL_NT) _mm_sfence();
 }
 
@@ -305,28 +305,31 @@ typedef struct { u64 block, npages; int pattern, cache, order; } vcfg;
 
 /* One compare pass over a block whose fill was seeded with r0. Returns nonzero
  * if it differs, with the differing bits in acc. Pages are read in the order
- * (k_mul, k_add) when the re-read order is shuffled. */
+ * (k_mul, k_add) when the re-read order is shuffled.
+ *
+ * acc is four u64, never a v256 in memory: mingw-w64 gcc doesn't align the
+ * Win64 stack to 32 bytes, so a v256 local, or one passed by value, gets
+ * aligned moves to an address that may not be aligned, and the first error
+ * crashed the Windows CLI and lite GUI (0.2.0 and 0.2.1). */
 static int differs(const vcfg *v, v256 *blk, u64 page, const rng_t *r0, u64 k_mul, u64 k_add,
-                   int heat_iters, v256 *acc)
+                   int heat_iters, u64 *acc)
 {
     if (v->order) gen_pages(blk, v->npages, r0->s[0], k_mul, k_add, OP_CHECK, acc, heat_iters);
     else gen_block(blk, v->block, page, r0, OP_CHECK, acc, v->pattern, v->cache, heat_iters);
-    return !_mm256_testz_si256(*acc, *acc);
+    return (acc[0] | acc[1] | acc[2] | acc[3]) != 0;
 }
 
 /* Was the stored data wrong, or only that read? Re-read the block from DRAM
  * (the bad copy may sit in cache) twice, then report. */
 static void report(ms_test *t, int id, u64 cycle, const vcfg *v, v256 *blk, u64 page, const rng_t *r0,
-                   v256 acc, int pass)
+                   const u64 *bits, int pass)
 {
-    u64 bits[4];
     int again = 0;
-    _mm256_storeu_si256((v256 *)bits, acc);
     for (int j = 0; j < 2; j++) {
-        v256 acc2;
+        u64 b2[4];
         flush_lines(blk, v->block);
-        differs(v, blk, page, r0, 1, 0, 0, &acc2);
-        if (!_mm256_testz_si256(acc2, acc)) again++;
+        differs(v, blk, page, r0, 1, 0, 0, b2);
+        if ((b2[0] & bits[0]) | (b2[1] & bits[1]) | (b2[2] & bits[2]) | (b2[3] & bits[3])) again++;
     }
     ms__report_error(t, id, cycle, (u64)((char *)blk - t->arena), bits, pass, again);
 }
@@ -349,13 +352,14 @@ void ms__verify_worker(ms_test *t, int id)
     for (u64 cycle = 0; !ld32(&t->stop); cycle++) {
         for (u64 b = 0; b < nblocks; b++) {
             if (ld32(&t->stop)) goto out;
-            v256 *blk = (v256 *)(base + b * block), acc;
+            v256 *blk = (v256 *)(base + b * block);
+            u64 acc[4];
             u64 page = base_page + b * (block >> 12) + cycle * 0x10001;
             /* Late check: this block was last read a whole cycle ago and has
              * sat in DRAM untouched since, while the rest of the slice was
              * written and read. Check it once more before overwriting it. */
             if (prev && cycle && !prev[b].skip) {
-                if (differs(&v, blk, page - 0x10001, &prev[b].r0, 1, 0, 0, &acc))
+                if (differs(&v, blk, page - 0x10001, &prev[b].r0, 1, 0, 0, acc))
                     report(t, id, cycle - 1, &v, blk, page - 0x10001, &prev[b].r0, acc, MS_PASS_LATE);
                 add64(&ctr->bytes, block);
             }
@@ -370,7 +374,7 @@ void ms__verify_worker(ms_test *t, int id)
                 if (ld32(&t->stop)) goto out;
                 if (v.cache == MS_CACHE_FLUSH) flush_lines(blk, block);
                 u64 k_mul = v.order ? rng_next(&pr) | 1 : 1, k_add = v.order ? rng_next(&pr) : 0;
-                int bad = differs(&v, blk, page, &r0, k_mul, k_add, heat_iters, &acc);
+                int bad = differs(&v, blk, page, &r0, k_mul, k_add, heat_iters, acc);
                 add64(&ctr->bytes, block);
                 if (bad) {
                     report(t, id, cycle, &v, blk, page, &r0, acc, k);

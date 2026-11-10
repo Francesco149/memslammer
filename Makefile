@@ -14,7 +14,11 @@ VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v/
 CC ?= cc
 WINCC ?= x86_64-w64-mingw32-gcc
 WINDRES ?= x86_64-w64-mingw32-windres
-WINFLAGS := -D_WIN32_WINNT=0x0601
+# mingw-w64 gcc doesn't align the Win64 stack to 32 bytes but still emits
+# aligned moves for AVX values it keeps there (gcc bug 54412). That crashed
+# the Windows CLI and lite GUI on their first error in 0.2.0 and 0.2.1. Have
+# the assembler turn every aligned vector move into an unaligned one.
+WINFLAGS := -D_WIN32_WINNT=0x0601 -Wa,-muse-unaligned-vector-move
 CFLAGS ?= -O3 -Wall -Wextra
 LDFLAGS ?= -s
 CFLAGS += -std=gnu11 -DMS_VERSION=\"$(VERSION)\"
@@ -85,8 +89,13 @@ gui:
 # ---- tests ----
 build/selftest: tests/selftest.c $(LCORE) $(CORE_H)
 	$(CC) $(CFLAGS) -o $@ tests/selftest.c $(LCORE) -pthread
-test: build/selftest
+build/selftest.exe: tests/selftest.c $(WCORE) $(CORE_H)
+	$(WINCC) $(CFLAGS) $(WINFLAGS) -o $@ tests/selftest.c $(WCORE) -static
+# The Windows build has its own compiler and ABI, so test it too where wine
+# is installed: the Linux self-test passed while the Windows CLI crashed.
+test: build/selftest $(if $(shell command -v wine),build/selftest.exe)
 	build/selftest
+	$(if $(shell command -v wine),WINEDEBUG=-all wine build/selftest.exe)
 
 # ---- harness tools (not shipped) ----
 build/memtimings: harness/memtimings.c | build
