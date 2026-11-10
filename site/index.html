@@ -144,7 +144,7 @@ and kept only what measurably shortened time-to-first-error on real unstable set
 
 <h3>CLI</h3>
 <pre><code><span class="dim">&gt;</span> memslammer -s            <span class="dim"># verify 90% of free RAM, stop at the first error</span>
-memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1
+memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
 [     10.1s] cycles 0, coverage 26.9%, 57.90 GB/s, errors 0
 [     20.2s] cycles 0, coverage 53.8%, 57.97 GB/s, errors 0
 [     30.2s] cycles 0, coverage 80.8%, 57.86 GB/s, errors 0
@@ -156,7 +156,7 @@ RESULT tester=memslammer errors=1 first_error_s=41.993 elapsed_s=42.014</code></
 <p>Options: <code>-m MB</code>, <code>-t threads</code>, <code>-d seconds</code>, <code>-s</code> stop on first error, <code>-M verify|chain</code>, plus every ingredient below (<code>-h</code> lists them). Exit status: 0 no errors, 1 errors, 2 bad arguments. Ctrl+C stops cleanly and prints the summary. Every GUI shows the equivalent CLI command for its settings.</p>
 
 <h2 id="how">How the test works</h2>
-<p><b><code>verify</code> (default).</b> Each thread owns a share of the test memory and walks it in 16 MiB blocks. It fills a block with random data (xoshiro256**, fresh seed per block), then re-reads and compares the block 200 times, regenerating the expected values on the fly, so there's no second copy to read. Any mismatch is an error, logged with the time, thread, block offset and the exact bits that flipped. Then it moves to the next block.</p>
+<p><b><code>verify</code> (default).</b> Each thread owns a share of the test memory and walks it in 16 MiB blocks. It fills a block with random data (xoshiro256**, fresh seed per block), then re-reads and compares the block 200 times, regenerating the expected values on the fly, so there's no second copy to read. Any mismatch is an error, logged with the time, thread, block offset and the exact bits that flipped. Then it moves to the next block. When it comes back to a block a cycle later, it compares it once more before refilling it: by then the data has sat in DRAM unread while the rest of the memory was being tested, which is what shows a refresh or retention problem.</p>
 <p>What we learned building it (details and raw data in <a href="https://github.com/Francesco149/memslammer/blob/master/docs/results.md">docs/results.md</a>):</p>
 <ul>
   <li><b>Data entropy is what triggers the fault.</b> The same fill-and-reread loop never failed in 10–15 minutes with low-entropy patterns (a toggle template, a 16-bit multiply chain), and failed in seconds with random data.</li>

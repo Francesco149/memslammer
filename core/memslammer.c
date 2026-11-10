@@ -242,6 +242,7 @@ void ms_config_init(ms_config *c)
     c->pattern = MS_PATTERN_RANDOM;
     c->cache = MS_CACHE_NONE;
     c->order = MS_ORDER_SEQ;
+    c->late = 1;
 }
 
 const char *ms_config_help(void)
@@ -262,6 +263,9 @@ const char *ms_config_help(void)
         "              in a new pseudo-random order every pass; random pattern only)\n"
         "  -H N        verify: N iterations of an AVX FP heat burst after every\n"
         "              4 KiB read or written (random pattern only; default 0)\n"
+        "  -L          verify: skip the late check (each block is otherwise checked\n"
+        "              once more just before its next fill, a whole cycle later)\n"
+        "  -N          verify: fill with non-temporal stores (experimental)\n"
         "  -p N        chain: forward/reverse passes per cycle (default 4)\n"
         "  -o MASK     chain: enabled ops bitmask: 1 add 2 sub 4 xor 8 not (default 15)\n"
         "  -F          chain: disable cache flushing\n";
@@ -301,6 +305,8 @@ int ms_config_parse(ms_config *c, int argc, char **argv, char *err, size_t errle
         if (f == 'F') { c->flush = 0; continue; }
         if (f == 'Y') { c->yield = 0; continue; }
         if (f == 's') { c->stop_on_error = 1; continue; }
+        if (f == 'L') { c->late = 0; continue; }
+        if (f == 'N') { c->nt_fill = 1; continue; }
         if (!strchr("mtbpdorHMCAP", f)) { snprintf(err, errlen, "unknown option '%s'", a); return -1; }
         if (i + 1 >= argc) { snprintf(err, errlen, "%s needs a value", a); return -1; }
         const char *v = argv[++i];
@@ -377,9 +383,10 @@ void ms_config_describe(const ms_config *c, char *buf, size_t n)
     cpu_detect();
     unsigned long long mb = (slice_bytes_of(c) * (u64)c->threads) >> 20;
     if (c->mode == MS_MODE_VERIFY)
-        snprintf(buf, n, "memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, order %s, heat %d, yield %d",
+        snprintf(buf, n, "memslammer verify: %llu MB, %d threads, block %llu, rereads %d, pattern %s, cache %s, order %s, heat %d, yield %d, late %d, fill %s",
                  mb, c->threads, (unsigned long long)c->block, c->rereads, pattern_names[c->pattern],
-                 cache_names[c->cache], order_names[c->order], c->heat, c->yield);
+                 cache_names[c->cache], order_names[c->order], c->heat, c->yield, !!c->late,
+                 c->nt_fill ? "nt" : "store");
     else
         snprintf(buf, n, "memslammer chain: %llu MB, %d threads, block %llu, passes %d, flush %s, yield %d, ops 0x%x",
                  mb, c->threads, (unsigned long long)c->block, c->passes,
@@ -406,6 +413,8 @@ void ms_config_to_args(const ms_config *c, char *buf, size_t n)
         if (c->cache != d.cache) ADD(" -C %s", cache_names[c->cache]);
         if (c->order != d.order) ADD(" -A %s", order_names[c->order]);
         if (c->heat) ADD(" -H %d", c->heat);
+        if (!c->late) ADD(" -L");
+        if (c->nt_fill) ADD(" -N");
     } else {
         if (c->passes != d.passes) ADD(" -p %d", c->passes);
         if ((c->ops & 0xF) != 0xF && c->ops) ADD(" -o %d", c->ops);

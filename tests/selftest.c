@@ -42,7 +42,7 @@ static void test_config(void)
     ms_config c;
     char err[200];
     ms_config_init(&c);
-    CHECK(c.mode == MS_MODE_VERIFY && c.rereads == 200 && c.pattern == MS_PATTERN_RANDOM, "defaults");
+    CHECK(c.mode == MS_MODE_VERIFY && c.rereads == 200 && c.pattern == MS_PATTERN_RANDOM && c.late && !c.nt_fill, "defaults");
     char *a1[] = { "-m", "512", "-t", "3", "-M", "chain", "-F", "-s", "-d", "2.5" };
     CHECK(ms_config_parse(&c, 10, a1, err, sizeof err) == 0, "parse: %s", err);
     CHECK(c.megabytes == 512 && c.threads == 3 && c.mode == MS_MODE_CHAIN && !c.flush && c.stop_on_error && c.seconds == 2.5, "parsed values");
@@ -67,13 +67,22 @@ static void test_config(void)
     char args[200];
     ms_config_to_args(&c, args, sizeof args);
     CHECK(!strcmp(args, "-M chain -m 1024 -t 2 -d 60 -F"), "to_args: '%s'", args);
+
+    ms_config_init(&c);
+    char *a5[] = { "-L", "-N", "-r", "20" };
+    CHECK(ms_config_parse(&c, 4, a5, err, sizeof err) == 0, "parse: %s", err);
+    CHECK(!c.late && c.nt_fill && c.rereads == 20, "-L -N parsed");
+    ms_config_to_args(&c, args, sizeof args);
+    CHECK(!strcmp(args, "-r 20 -L -N"), "to_args: '%s'", args);
 }
 
-static void test_clean(int mode)
+static void test_clean(int mode, int nt_fill)
 {
     ms_config c;
     ms_config_init(&c);
     c.mode = mode; c.megabytes = 256; c.threads = 2; c.seconds = 2;
+    c.nt_fill = nt_fill;
+    if (nt_fill) c.rereads = 2;  /* mostly fills, and many late checks */
     ms_test *t = start(&c);
     CHECK(ms_wait(t, 10000), "clean %d: finished", mode);
     ms_status s;
@@ -83,8 +92,8 @@ static void test_clean(int mode)
     CHECK(s.elapsed >= 2 && s.elapsed < 4, "clean %d: elapsed %.2f", mode, s.elapsed);
     CHECK(s.bytes > 0, "clean %d: no traffic", mode);
     CHECK(s.megabytes == 256, "clean %d: %llu MB", mode, (unsigned long long)s.megabytes);
-    printf("clean %s: %.1f GB/s, %llu cycles\n", mode ? "verify" : "chain", s.bytes / s.elapsed / 1e9,
-           (unsigned long long)s.cycles);
+    printf("clean %s%s: %.1f GB/s, %llu cycles\n", mode ? "verify" : "chain", nt_fill ? " (nt fill, 2 re-reads)" : "",
+           s.bytes / s.elapsed / 1e9, (unsigned long long)s.cycles);
     ms_free(t);
 }
 
@@ -136,6 +145,102 @@ static void test_verify_flip(int stop_on_error)
     ms_free(t);
 }
 
+/* Flip a bit in every block while each thread is busy elsewhere in its slice.
+ * Only the late check reads a block again after its re-reads, so that is what
+ * must catch them; with it off, the next fill silently overwrites them. */
+static void test_late(int late, int order)
+{
+    ms_config c;
+    ms_config_init(&c);
+    c.megabytes = 256; c.threads = 2; c.rereads = 1; c.late = late; c.order = order;
+    ms_test *t = start(&c);
+    CHECK(wait_state(t, MS_STATE_RUNNING, 10000), "late: running");
+    ms_thread_status ts[2];
+    for (int i = 0; i < 2000; i++) {
+        ms_get_thread(t, 0, &ts[0]);
+        ms_get_thread(t, 1, &ts[1]);
+        if (ts[0].cycles >= 1 && ts[1].cycles >= 1) break;
+        nap(5);
+    }
+    u64 nblocks = t->total_bytes / t->cfg.block, at[2] = { ts[0].cycles, ts[1].cycles };
+    for (u64 off = 0; off < t->total_bytes; off += t->cfg.block)
+        *(volatile u64 *)(t->arena + off + 4096 + 16) ^= 1ull << 5;
+    for (int i = 0; i < 2000; i++) {   /* until every block has been refilled */
+        ms_get_thread(t, 0, &ts[0]);
+        ms_get_thread(t, 1, &ts[1]);
+        if (ts[0].cycles >= at[0] + 2 && ts[1].cycles >= at[1] + 2) break;
+        nap(5);
+    }
+    ms_stop(t);
+    ms_wait(t, 5000);
+    ms_status s;
+    ms_get_status(t, &s);
+    ms_error e[64];
+    size_t n = ms_get_errors(t, 0, e, 64), n_late = 0;
+    for (size_t i = 0; i < n; i++) {
+        if (e[i].pass == MS_PASS_LATE) n_late++;
+        else CHECK(e[i].pass == 0, "late: pass %d", e[i].pass);
+        CHECK(!e[i].bits[0] && !e[i].bits[1] && e[i].bits[2] == 1ull << 5 && !e[i].bits[3],
+              "late: bits %016llx %016llx %016llx %016llx", (unsigned long long)e[i].bits[0],
+              (unsigned long long)e[i].bits[1], (unsigned long long)e[i].bits[2], (unsigned long long)e[i].bits[3]);
+        CHECK(e[i].recheck == 2, "late: recheck %d", e[i].recheck);
+        CHECK(e[i].offset % t->cfg.block == 0 && e[i].offset / t->slice_bytes == (u64)e[i].thread, "late: offset");
+    }
+    /* Each thread is inside one block when the flips land: that one is caught
+     * by its re-read or overwritten by its fill. The rest sit idle. */
+    if (late) CHECK(n_late >= nblocks - 2 && s.errors <= nblocks, "late: %zu late errors, %llu in all, %llu blocks",
+                    n_late, (unsigned long long)s.errors, (unsigned long long)nblocks);
+    else CHECK(n_late == 0 && s.errors <= 2, "late off: %zu late errors, %llu in all", n_late, (unsigned long long)s.errors);
+    printf("late check %s%s: %zu of %llu flipped blocks caught late, %llu errors in all\n", late ? "on" : "off",
+           order ? " (shuffle)" : "", n_late, (unsigned long long)nblocks, (unsigned long long)s.errors);
+    ms_free(t);
+}
+
+/* A block that already failed a re-read must not be reported again by its
+ * late check: one stored flip is one error. */
+static void test_late_once(void)
+{
+    ms_config c;
+    ms_config_init(&c);
+    c.megabytes = 64; c.threads = 2; c.block = 16u << 20; c.rereads = 400;
+    ms_test *t = start(&c);
+    CHECK(wait_state(t, MS_STATE_RUNNING, 10000), "late once: running");
+    ms_thread_status ts[2];
+    ms_status s;
+    for (int round = 0; round < 200; round++) {     /* flip until some re-read catches one */
+        for (u64 off = 0; off < t->total_bytes; off += 4096)
+            *(volatile u64 *)(t->arena + off + 64) ^= 1ull << 9;
+        nap(20);
+        ms_get_status(t, &s);
+        if (s.errors) break;
+        for (u64 off = 0; off < t->total_bytes; off += 4096)   /* undo, try again */
+            *(volatile u64 *)(t->arena + off + 64) ^= 1ull << 9;
+    }
+    ms_get_thread(t, 0, &ts[0]);
+    ms_get_thread(t, 1, &ts[1]);
+    u64 at[2] = { ts[0].cycles, ts[1].cycles };
+    for (int i = 0; i < 4000; i++) {
+        ms_get_thread(t, 0, &ts[0]);
+        ms_get_thread(t, 1, &ts[1]);
+        if (ts[0].cycles >= at[0] + 2 && ts[1].cycles >= at[1] + 2) break;
+        nap(5);
+    }
+    ms_stop(t);
+    ms_wait(t, 5000);
+    ms_get_status(t, &s);
+    /* 2 blocks per thread, all flipped: each is found at most once, by a
+     * re-read or by its late check (not at all if its fill came first). */
+    ms_error e[16];
+    size_t n = ms_get_errors(t, 0, e, 16);
+    CHECK(s.errors >= 1 && s.errors <= 4, "late once: %llu errors for 4 flipped blocks", (unsigned long long)s.errors);
+    for (size_t i = 0; i < n; i++)
+        for (size_t j = 0; j < i; j++)
+            CHECK(e[i].offset != e[j].offset, "late once: block at %llu reported twice (pass %d and %d)",
+                  (unsigned long long)e[i].offset, e[j].pass, e[i].pass);
+    printf("late check, no double report: %llu errors for 4 flipped blocks\n", (unsigned long long)s.errors);
+    ms_free(t);
+}
+
 static void test_chain_flip(void)
 {
     ms_config c;
@@ -173,8 +278,13 @@ int main(void)
            si.logical_cpus, (unsigned long long)si.avail_mb);
     if (!si.avx2) { printf("no AVX2, skipping\n"); return 0; }
     test_config();
-    test_clean(MS_MODE_VERIFY);
-    test_clean(MS_MODE_CHAIN);
+    test_clean(MS_MODE_VERIFY, 0);
+    test_clean(MS_MODE_VERIFY, 1);
+    test_clean(MS_MODE_CHAIN, 0);
+    test_late(1, MS_ORDER_SEQ);
+    test_late(1, MS_ORDER_SHUFFLE);
+    test_late(0, MS_ORDER_SEQ);
+    test_late_once();
     test_verify_flip(0);
     test_verify_flip(1);
     test_chain_flip();

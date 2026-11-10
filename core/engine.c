@@ -6,7 +6,9 @@
  *   chain   clean-room reimplementation of the technique described in
  *           docs/karhu.md (chained transform + checksum).
  *   verify  fill a block, then re-read and compare it many times, modelled on
- *           the first test of TM5's Absolut profile (docs/tm5.md).
+ *           the first test of TM5's Absolut profile (docs/tm5.md); compare it
+ *           once more a cycle later, before refilling it, as TM5's
+ *           RefreshStable does.
  *
  * Every ingredient is switchable so we can measure which ones make errors
  * show up fast. The defaults are the fastest combination measured so far
@@ -14,6 +16,7 @@
  */
 #include "internal.h"
 #include <immintrin.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* prefetchnta distance for verify reads (TM5 prefetches 8 strides ahead) */
@@ -211,10 +214,19 @@ static v256 mul0, mul1;
  * flipped on two boots, so it may be a data pattern the bus handles badly. */
 static v256 kpage[2];
 
+/* What a pass over a block does with each vector of the pattern. */
+enum { OP_FILL = 0, OP_CHECK = 1, OP_FILL_NT = 2 };
+
+static inline void put(v256 *p, v256 v, int op)
+{
+    if (op == OP_FILL_NT) _mm256_stream_si256(p, v); else _mm256_store_si256(p, v);
+}
+
 /* Generate (fill) or check (xor-accumulate) one block. pages = block / 4096. */
-static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int check, v256 *acc,
+static void gen_block(v256 *blk, u64 bytes, u64 first_page, const rng_t *seed_rng, int op, v256 *acc,
                       int pattern, int cache, int heat_iters)
 {
+    const int check = op == OP_CHECK;
     u64 nv = bytes / 32;
     v256 a = _mm256_setzero_si256();
     if (pattern == MS_PATTERN_KPAGE) {
@@ -223,7 +235,7 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
             if (check) {
                 if (cache == MS_CACHE_NTA && !(i & 1)) _mm_prefetch((const char *)(blk + i) + NTA_AHEAD, _MM_HINT_NTA);
                 a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(blk + i)));
-            } else _mm256_store_si256(blk + i, v);
+            } else put(blk + i, v, op);
         }
     } else if (pattern == MS_PATTERN_RANDOM) {
         rng_t r = *seed_rng;
@@ -233,7 +245,7 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
             if (check) {
                 if (cache == MS_CACHE_NTA && !(i & 1)) _mm_prefetch((const char *)(blk + i) + NTA_AHEAD, _MM_HINT_NTA);
                 a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(blk + i)));
-            } else _mm256_store_si256(blk + i, v);
+            } else put(blk + i, v, op);
             if ((i & 127) == 127) heat(heat_iters);
         }
     } else {
@@ -245,7 +257,7 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
                     if (check) {
                         if (cache == MS_CACHE_NTA && !(i & 1)) _mm_prefetch((const char *)(p + i) + NTA_AHEAD, _MM_HINT_NTA);
                         a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(p + i)));
-                    } else _mm256_store_si256(p + i, v);
+                    } else put(p + i, v, op);
                 }
             } else {
                 v256 st = _mm256_xor_si256(tmpl[0], key);
@@ -253,21 +265,23 @@ static void gen_block(v256 *blk, u64 bytes, u64 first_page, rng_t *seed_rng, int
                     if (check) {
                         if (cache == MS_CACHE_NTA && !(i & 1)) _mm_prefetch((const char *)(p + i) + NTA_AHEAD, _MM_HINT_NTA);
                         a = _mm256_or_si256(a, _mm256_xor_si256(st, _mm256_load_si256(p + i)));
-                    } else _mm256_store_si256(p + i, st);
+                    } else put(p + i, st, op);
                     st = _mm256_add_epi16(_mm256_mullo_epi16(st, mul0), mul1);
                 }
             }
         }
     }
     if (check) *acc = a;
+    else if (op == OP_FILL_NT) _mm_sfence();
 }
 
 /* Random data seeded per 4 KiB page, so pages can be filled and checked in any
  * order. Pass k visits page (k_mul * i + k_add) mod npages for i = 0..npages-1;
  * k_mul is odd and npages a power of two, so that is a permutation. */
-static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, int check, v256 *acc,
+static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, int op, v256 *acc,
                       int heat_iters)
 {
+    const int check = op == OP_CHECK;
     v256 a = _mm256_setzero_si256();
     for (u64 i = 0; i < npages; i++) {
         u64 pg = (k_mul * i + k_add) & (npages - 1), s = bseed ^ (pg * 0xd1b54a32d192ed03ull);
@@ -278,55 +292,89 @@ static void gen_pages(v256 *blk, u64 npages, u64 bseed, u64 k_mul, u64 k_add, in
             v256 v = _mm256_set_epi64x((long long)rng_next(&r), (long long)rng_next(&r),
                                        (long long)rng_next(&r), (long long)rng_next(&r));
             if (check) a = _mm256_or_si256(a, _mm256_xor_si256(v, _mm256_load_si256(p + j)));
-            else _mm256_store_si256(p + j, v);
+            else put(p + j, v, op);
         }
         heat(heat_iters);
     }
     if (check) *acc = a;
+    else if (op == OP_FILL_NT) _mm_sfence();
+}
+
+/* The parts of the config a verify pass needs. */
+typedef struct { u64 block, npages; int pattern, cache, order; } vcfg;
+
+/* One compare pass over a block whose fill was seeded with r0. Returns nonzero
+ * if it differs, with the differing bits in acc. Pages are read in the order
+ * (k_mul, k_add) when the re-read order is shuffled. */
+static int differs(const vcfg *v, v256 *blk, u64 page, const rng_t *r0, u64 k_mul, u64 k_add,
+                   int heat_iters, v256 *acc)
+{
+    if (v->order) gen_pages(blk, v->npages, r0->s[0], k_mul, k_add, OP_CHECK, acc, heat_iters);
+    else gen_block(blk, v->block, page, r0, OP_CHECK, acc, v->pattern, v->cache, heat_iters);
+    return !_mm256_testz_si256(*acc, *acc);
+}
+
+/* Was the stored data wrong, or only that read? Re-read the block from DRAM
+ * (the bad copy may sit in cache) twice, then report. */
+static void report(ms_test *t, int id, u64 cycle, const vcfg *v, v256 *blk, u64 page, const rng_t *r0,
+                   v256 acc, int pass)
+{
+    u64 bits[4];
+    int again = 0;
+    _mm256_storeu_si256((v256 *)bits, acc);
+    for (int j = 0; j < 2; j++) {
+        v256 acc2;
+        flush_lines(blk, v->block);
+        differs(v, blk, page, r0, 1, 0, 0, &acc2);
+        if (!_mm256_testz_si256(acc2, acc)) again++;
+    }
+    ms__report_error(t, id, cycle, (u64)((char *)blk - t->arena), bits, pass, again);
 }
 
 void ms__verify_worker(ms_test *t, int id)
 {
     const u64 slice = t->slice_bytes, block = t->cfg.block;
-    const int rereads = t->cfg.rereads, pattern = t->cfg.pattern, cache = t->cfg.cache;
-    const int order = t->cfg.order, heat_iters = t->cfg.heat, yield = t->cfg.yield;
+    const int rereads = t->cfg.rereads, heat_iters = t->cfg.heat, yield = t->cfg.yield;
+    const int fill = t->cfg.nt_fill ? OP_FILL_NT : OP_FILL;
+    const vcfg v = { block, block >> 12, t->cfg.pattern, t->cfg.cache, t->cfg.order };
     char *base = t->arena + (u64)id * slice;
-    u64 nblocks = slice / block, npages = block >> 12;
+    u64 nblocks = slice / block;
     u64 seed = worker_seed(id);
     u64 base_page = (u64)id * (slice >> 12);
     ms_counters *ctr = &t->ctr[id];
+    /* Each block's seed from the previous cycle, for the late check. Without
+     * the memory for it (40 bytes per block) the late check is skipped. */
+    struct { rng_t r0; int skip; } *prev = t->cfg.late ? malloc(nblocks * sizeof *prev) : NULL;
 
     for (u64 cycle = 0; !ld32(&t->stop); cycle++) {
         for (u64 b = 0; b < nblocks; b++) {
-            v256 *blk = (v256 *)(base + b * block);
+            if (ld32(&t->stop)) goto out;
+            v256 *blk = (v256 *)(base + b * block), acc;
             u64 page = base_page + b * (block >> 12) + cycle * 0x10001;
-            rng_t r;
-            for (int i = 0; i < 4; i++) r.s[i] = splitmix(&seed);
-            u64 bseed = r.s[0];
-            if (order) gen_pages(blk, npages, bseed, 1, 0, 0, NULL, heat_iters);
-            else gen_block(blk, block, page, &r, 0, NULL, pattern, cache, heat_iters);
+            /* Late check: this block was last read a whole cycle ago and has
+             * sat in DRAM untouched since, while the rest of the slice was
+             * written and read. Check it once more before overwriting it. */
+            if (prev && cycle && !prev[b].skip) {
+                if (differs(&v, blk, page - 0x10001, &prev[b].r0, 1, 0, 0, &acc))
+                    report(t, id, cycle - 1, &v, blk, page - 0x10001, &prev[b].r0, acc, MS_PASS_LATE);
+                add64(&ctr->bytes, block);
+            }
+            rng_t r0, pr;
+            for (int i = 0; i < 4; i++) r0.s[i] = splitmix(&seed);
+            pr = r0;  /* draws the shuffled orders */
+            if (prev) prev[b].r0 = r0, prev[b].skip = 0;
+            if (v.order) gen_pages(blk, v.npages, r0.s[0], 1, 0, fill, NULL, heat_iters);
+            else gen_block(blk, block, page, &r0, fill, NULL, v.pattern, v.cache, heat_iters);
             add64(&ctr->bytes, block);
             for (int k = 0; k < rereads; k++) {
-                if (ld32(&t->stop)) return;
-                if (cache == MS_CACHE_FLUSH) flush_lines(blk, block);
-                v256 acc;
-                if (order) gen_pages(blk, npages, bseed, rng_next(&r) | 1, rng_next(&r), 1, &acc, heat_iters);
-                else gen_block(blk, block, page, &r, 1, &acc, pattern, cache, heat_iters);
+                if (ld32(&t->stop)) goto out;
+                if (v.cache == MS_CACHE_FLUSH) flush_lines(blk, block);
+                u64 k_mul = v.order ? rng_next(&pr) | 1 : 1, k_add = v.order ? rng_next(&pr) : 0;
+                int bad = differs(&v, blk, page, &r0, k_mul, k_add, heat_iters, &acc);
                 add64(&ctr->bytes, block);
-                if (!_mm256_testz_si256(acc, acc)) {
-                    u64 bits[4];
-                    _mm256_storeu_si256((v256 *)bits, acc);
-                    /* Was the stored data wrong, or only this read? Re-read the
-                     * block from DRAM (the bad copy may sit in cache) twice. */
-                    int again = 0;
-                    for (int j = 0; j < 2; j++) {
-                        v256 acc2;
-                        flush_lines(blk, block);
-                        if (order) gen_pages(blk, npages, bseed, 1, 0, 1, &acc2, 0);
-                        else gen_block(blk, block, page, &r, 1, &acc2, pattern, cache, 0);
-                        if (!_mm256_testz_si256(acc2, acc)) again++;
-                    }
-                    ms__report_error(t, id, cycle, (u64)((char *)blk - t->arena), bits, k, again);
+                if (bad) {
+                    report(t, id, cycle, &v, blk, page, &r0, acc, k);
+                    if (prev) prev[b].skip = 1;  /* already reported: not again as late */
                     break;
                 }
             }
@@ -335,6 +383,8 @@ void ms__verify_worker(ms_test *t, int id)
         }
         add64(&ctr->cycles, 1);
     }
+out:
+    free(prev);
 }
 
 void ms__engine_init(int ls, int clflushopt)

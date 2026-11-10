@@ -54,6 +54,10 @@ typedef struct ms_config {
     int cache;           /* MS_CACHE_* */
     int order;           /* MS_ORDER_* */
     int heat;            /* FP heat iterations per 4 KiB (random pattern only) */
+    int late;            /* check each block once more just before it is refilled,
+                          * after it sat unread for a whole cycle (default on) */
+    int nt_fill;         /* fill with non-temporal stores: no read for ownership,
+                          * and the block leaves the cache as it is written */
 } ms_config;
 
 /* Defaults: the fastest-failing configuration we have measured. */
@@ -123,7 +127,10 @@ typedef struct ms_error {
                              * pass, for each bit of a 32-byte vector, i.e. four
                              * consecutive 64-bit words. 0 in chain mode. */
     int pass;               /* verify: which re-read of the block found it, 0 = the
-                             * first after the fill. -1 in chain mode. */
+                             * first after the fill; MS_PASS_LATE = the late
+                             * check, a cycle after the block was last read
+                             * (cycle is then the one that wrote the data).
+                             * -1 in chain mode. */
     int recheck;            /* verify: right after the error the block is flushed
                              * from cache and read twice more; this counts the
                              * re-reads that failed again in the same bits.
@@ -131,6 +138,8 @@ typedef struct ms_error {
                              * right and the failing read itself went wrong.
                              * -1 in chain mode. */
 } ms_error;
+
+#define MS_PASS_LATE (-2)
 
 /* The last MS_ERRORS_KEPT errors are kept. Copies up to max of them with
  * index >= first into out, oldest first, and returns how many it copied. */

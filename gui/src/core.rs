@@ -31,6 +31,8 @@ pub struct Config {
     pub cache: c_int,
     pub order: c_int,
     pub heat: c_int,
+    pub late: c_int,
+    pub nt_fill: c_int,
 }
 
 #[repr(C)]
@@ -63,7 +65,8 @@ pub struct Error {
     pub cycle: u64,
     pub offset: u64,
     pub bits: [u64; 4],
-    /// verify: which re-read of the block found it (0 = first); -1 in chain mode
+    /// verify: which re-read of the block found it (0 = first), -2 = the late
+    /// check before the block's next fill; -1 in chain mode
     pub pass: c_int,
     /// verify: how many of 2 flushed re-reads right after failed again; -1 in chain mode
     pub recheck: c_int,

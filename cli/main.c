@@ -64,6 +64,7 @@ static uint64_t drain_errors(ms_test *t, uint64_t next)
                     (unsigned long long)e[i].index + 1);
             if (bits) fprintf(stderr, " bits 0x%016llx", bits);
             if (e[i].pass >= 0) fprintf(stderr, " pass %d recheck %d/2", e[i].pass, e[i].recheck);
+            else if (e[i].pass == MS_PASS_LATE) fprintf(stderr, " pass late recheck %d/2", e[i].recheck);
             fputc('\n', stderr);
         }
         next = e[n - 1].index + 1;
