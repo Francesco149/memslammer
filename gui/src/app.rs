@@ -25,7 +25,7 @@ const MAX_ERRORS_SHOWN: usize = 2000;
 
 const DURATIONS: [(&str, f64); 7] =
     [("∞", 0.), ("5m", 300.), ("15m", 900.), ("30m", 1800.), ("1h", 3600.), ("2h", 7200.), ("4h", 14400.)];
-const REREADS: [i32; 4] = [1, 50, 200, 1000];
+const REREADS: [i32; 4] = [2, 20, 200, 1000];
 const HEATS: [i32; 4] = [0, 32, 64, 128];
 const VERIFY_BLOCKS: [(&str, u64); 3] = [("4 MiB", 4 << 20), ("16 MiB", 16 << 20), ("64 MiB", 64 << 20)];
 const CHAIN_BLOCKS: [(&str, u64); 2] = [("4 KiB", 4096), ("64 KiB", 65536)];
@@ -176,7 +176,7 @@ impl MemslammerApp {
             duration: 0,
             stop_on_error: true,
             advanced: false,
-            rereads: 2,
+            rereads: 1,
             pattern: 2,
             cache: 0,
             order: 0,
@@ -524,7 +524,7 @@ impl MemslammerApp {
                     .child(Self::field(
                         "Re-reads per fill",
                         None,
-                        self.segmented("rereads", &["1", "50", "200", "1000"], s.rereads, busy, |s, i| s.rereads = i, cx),
+                        self.segmented("rereads", &["2", "20", "200", "1000"], s.rereads, busy, |s, i| s.rereads = i, cx),
                         muted,
                     ))
                     .child(Self::field(

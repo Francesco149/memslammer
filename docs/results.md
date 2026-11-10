@@ -791,3 +791,17 @@ Taken together with the DDR5 box:
 (medians; the DDR5 default is from the day before.) `-r 20` is faster than
 the default on both faults. `-r 2` is much the fastest on one and no
 better than the default on the other.
+
+`verify` now defaults to 20 re-reads per fill (0.2.0). Three warm runs with
+the new default right after, on the DDR4 box, back to back:
+
+| run | first error | bits | pass | recheck |
+|---|---:|---|---:|---|
+| by hand, not recorded      | 138.4 s | `0x00ff000000000000` | 6 | 0/2 |
+| `20261110-190758-5173`     | 192.3 s | `0x8000`             | 4 | 0/2 |
+| `20261110-191112-5b2a`     | 31.4 s  | `0x8000`             | 7 | 0/2 |
+
+- The first of them is the only error on this box so far that was not bit
+  `0x8000`: one read returned all eight bits of byte 6 flipped, and the two
+  re-reads of the same word were right. One event; it has not recurred.
+- The box had idled for an hour before the first run, hence the spread.

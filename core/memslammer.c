@@ -238,7 +238,7 @@ void ms_config_init(ms_config *c)
     c->passes = 4;
     c->flush = 1;
     c->ops = 0xF;
-    c->rereads = 200;
+    c->rereads = 20;
     c->pattern = MS_PATTERN_RANDOM;
     c->cache = MS_CACHE_NONE;
     c->order = MS_ORDER_SEQ;
@@ -255,7 +255,7 @@ const char *ms_config_help(void)
         "  -s          stop on first error\n"
         "  -b BYTES    block size (default: verify 16 MiB, chain 4096)\n"
         "  -Y          disable yield after each block\n"
-        "  -r N        verify: compare passes per fill (default 200)\n"
+        "  -r N        verify: compare passes per fill (default 20)\n"
         "  -P PATTERN  verify: random (default), toggle, mul or kpage (experimental)\n"
         "  -C POLICY   verify reads: none (default), flush (clflushopt before each\n"
         "              pass) or nta (prefetchnta; does not bypass L3 on Zen 3)\n"

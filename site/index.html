@@ -106,9 +106,9 @@ and kept only what measurably shortened time-to-first-error on real unstable set
 <p class="note">No installer, driver, admin rights or network access. Single-file binaries; checksums in <code>SHA256SUMS.txt</code>. Needs an x86-64 CPU with AVX2 (Haswell, Zen or newer). MIT licensed.</p>
 
 <div class="facts">
-  <div><b>218 s</b>median time to first error from cold, vs 368 s Karhu and 418 s TM5 Absolut</div>
-  <div><b>3 / 3</b>rounds won in the cold-start race (odds ~1 in 125 if all were equal)</div>
-  <div><b>57 GB/s</b>sustained read+write on a 5900X with dual-channel DDR4-3600</div>
+  <div><b>2x and 3x</b>sooner to the first error than the previous default, on our DDR4 and DDR5 test faults (112 vs 216 s, 40 vs 118 s)</div>
+  <div><b>218 s</b>median from cold in the three-way race, vs 368 s Karhu and 418 s TM5 Absolut; won all 3 rounds (previous default)</div>
+  <div><b>51 and 75 GB/s</b>sustained read+write: 5900X with DDR4-3600, 7800X3D with DDR5-6000</div>
   <div><b>84 KB</b>static Linux CLI; the Windows CLI + native GUI zip is ~150 KB</div>
 </div>
 
@@ -119,10 +119,11 @@ and kept only what measurably shortened time-to-first-error on real unstable set
 
 <h2 id="use">Using it</h2>
 <ul>
-  <li><b>Close other programs</b>, start a test, and wait. The default is <code>verify</code> mode on 90% of free RAM, all threads, until stopped. That's the fastest-failing configuration we've measured.</li>
+  <li><b>Close other programs</b>, start a test, and wait. The default is <code>verify</code> mode on 90% of free RAM, all threads, 20 re-reads per fill, until stopped. That's the configuration that failed fastest across both of our test faults.</li>
   <li><b>Any error means the memory overclock is unstable.</b> The GUIs stop at the first error by default.</li>
-  <li><b>Errors come faster once the DIMMs are warm.</b> In our runs, the same setting failed within seconds on a hot box (4 s in the lite screenshot below) and took 2–11 minutes from cold. The usual loop (change one timing in UEFI, boot, retest) is a cold start, which is what we optimized for.</li>
-  <li><b>A clean run is evidence, not proof.</b> We tuned on one machine and one kind of fault (tCL/tRCD set too low). Use memslammer to reject bad settings quickly, then validate the final one longer, ideally with other testers too.</li>
+  <li><b>Errors come faster once the DIMMs are warm.</b> In our runs, the same DDR4 setting failed within seconds on a hot box (4 s in the lite screenshot below) and took 1.5–3 minutes from cold. The usual loop (change one timing in UEFI, boot, retest) is a cold start, which is what we optimized for.</li>
+  <li><b>If the default passes, try <code>-r 2</code> next</b> (2 re-reads per fill; "Re-reads per fill" in the full app's advanced settings). It writes four times as often. It found a DDR5 fault that corrupts stored data in 7.5 s against 40 s for the default, and was no faster than the old default on a DDR4 fault that only breaks reads.</li>
+  <li><b>A clean run is evidence, not proof.</b> We tuned on two machines and two kinds of fault (described under <a href="#results">Results</a>). Use memslammer to reject bad settings quickly, then validate the final one longer, ideally with other testers too.</li>
 </ul>
 
 <h2 id="frontends">Three frontends, one engine</h2>
@@ -138,38 +139,72 @@ and kept only what measurably shortened time-to-first-error on real unstable set
 <div class="shots">
   <figure><a href="img/lite-windows.png"><img src="img/lite-windows.png" alt="memslammer-lite on Windows" loading="lazy"></a><figcaption><code>memslammer-lite</code> on Windows: plain Win32, about 150 KB, DPI-aware, taskbar progress, keeps the PC awake while it runs. A real failure, 4 s into a run on a hot box.</figcaption></figure>
   <figure><a href="img/lite-linux.png"><img src="img/lite-linux.png" alt="memslammer-lite on Linux" loading="lazy"></a><figcaption><code>memslammer-lite</code> on Linux: GTK 3, follows your desktop theme, inhibits suspend while it runs.</figcaption></figure>
-  <figure><a href="img/gui-bits.png"><img src="img/gui-bits.png" alt="failing bit map" loading="lazy"></a><figcaption>Bit map: which bit positions of a 64-bit word flipped. On our test box every error from tCL/tRCD set too low hit the same line, byte 1 bit 7: timing faults tend to find the DQ with the least margin.</figcaption></figure>
+  <figure><a href="img/gui-bits.png"><img src="img/gui-bits.png" alt="failing bit map" loading="lazy"></a><figcaption>Bit map: which bit positions of a 64-bit word flipped. On our DDR4 test box nearly every error from tCL/tRCD set too low hit the same line, byte 1 bit 7: timing faults tend to find the DQ with the least margin.</figcaption></figure>
   <figure><a href="img/gui-threads.png"><img src="img/gui-threads.png" alt="full app per-thread view during a failing run" loading="lazy"></a><figcaption>Per-thread view of the same run: threads that hit an error turn red. 100% coverage means a thread has tested its whole share once.</figcaption></figure>
 </div>
 
 <h3>CLI</h3>
-<pre><code><span class="dim">&gt;</span> memslammer -s            <span class="dim"># verify 90% of free RAM, stop at the first error</span>
-memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
-[     10.1s] cycles 0, coverage 26.9%, 57.90 GB/s, errors 0
-[     20.2s] cycles 0, coverage 53.8%, 57.97 GB/s, errors 0
-[     30.2s] cycles 0, coverage 80.8%, 57.86 GB/s, errors 0
-[     40.2s] cycles 24, coverage 108.3%, 57.73 GB/s, errors 0
-<span class="err">[   41.993s] ERROR thread 5 cycle 1 (total 1) bits 0x0000000000008000</span>
-[     42.0s] cycles 24, coverage 113.6%, 57.03 GB/s, errors 1
-RESULT tester=memslammer errors=1 first_error_s=41.993 elapsed_s=42.014</code></pre>
-<p class="note">Real output on the test box (warm, a few minutes after another run), same unstable setting as everywhere on this page.</p>
+<pre><code><span class="dim">$</span> memslammer -s            <span class="dim"># verify 90% of free RAM, stop at the first error</span>
+memslammer verify: 13440 MB, 24 threads, block 16777216, rereads 20, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
+[     10.1s] cycles 24, coverage 167.1%, 50.38 GB/s, errors 0
+[     20.1s] cycles 72, coverage 331.4%, 50.70 GB/s, errors 0
+[     30.1s] cycles 102, coverage 494.9%, 50.76 GB/s, errors 0
+<span class="err">[   31.415s] ERROR thread 20 cycle 5 (total 1) bits 0x0000000000008000 pass 7 recheck 0/2</span>
+[     31.5s] cycles 116, coverage 516.2%, 49.61 GB/s, errors 1
+RESULT tester=memslammer errors=1 first_error_s=31.415 elapsed_s=31.452</code></pre>
+<p class="note">Real output on the DDR4 test box, booted from the Linux live USB, warm (right after another run). <code>bits</code> are the bit positions of a 64-bit word that flipped, <code>pass</code> is which re-read caught it (<code>late</code>: the check just before the block's next fill). <code>recheck 0/2</code> means two more reads of the same data came back right, so the read was bad and the stored data fine; <code>2/2</code> means the data in DRAM is wrong.</p>
 <p>Options: <code>-m MB</code>, <code>-t threads</code>, <code>-d seconds</code>, <code>-s</code> stop on first error, <code>-M verify|chain</code>, plus every ingredient below (<code>-h</code> lists them). Exit status: 0 no errors, 1 errors, 2 bad arguments. Ctrl+C stops cleanly and prints the summary. Every GUI shows the equivalent CLI command for its settings.</p>
 
 <h2 id="how">How the test works</h2>
-<p><b><code>verify</code> (default).</b> Each thread owns a share of the test memory and walks it in 16 MiB blocks. It fills a block with random data (xoshiro256**, fresh seed per block), then re-reads and compares the block 200 times, regenerating the expected values on the fly, so there's no second copy to read. Any mismatch is an error, logged with the time, thread, block offset and the exact bits that flipped. Then it moves to the next block. When it comes back to a block a cycle later, it compares it once more before refilling it: by then the data has sat in DRAM unread while the rest of the memory was being tested, which is what shows a refresh or retention problem.</p>
+<p><b><code>verify</code> (default).</b> Each thread owns a share of the test memory and walks it in 16 MiB blocks. It fills a block with random data (xoshiro256**, fresh seed per block), then re-reads and compares the block 20 times, regenerating the expected values on the fly, so there's no second copy to read. Any mismatch is an error, logged with the time, thread, block offset and the exact bits that flipped. Then it moves to the next block. When it comes back to a block a cycle later, it compares it once more before refilling it: by then the data has sat in DRAM unread while the rest of the memory was being tested, which is what shows a refresh or retention problem.</p>
 <p>What we learned building it (details and raw data in <a href="https://github.com/Francesco149/memslammer/blob/master/docs/results.md">docs/results.md</a>):</p>
 <ul>
   <li><b>Data entropy is what triggers the fault.</b> The same fill-and-reread loop never failed in 10–15 minutes with low-entropy patterns (a toggle template, a 16-bit multiply chain), and failed in seconds with random data.</li>
   <li><b>The working set must far exceed L3.</b> With 1 MiB blocks or half the threads, the re-reads stayed in each CCD's 32 MB L3 and nothing failed in 15 minutes. 16 MiB blocks had the best median and the tightest spread. 64 MiB was clearly worse, for reasons we haven't found yet.</li>
-  <li><b>Things that didn't help:</b> forcing DRAM reads with <code>clflushopt</code> (half the bandwidth, slower to fail), <code>prefetchnta</code> (doesn't bypass L3 on Zen 3), shuffled re-read order, and an AVX FP heat burst between reads (Karhu 1.1's "Stress FPU" idea). All stay available as options so they can be re-tested on other machines.</li>
+  <li><b>20 re-reads per fill, not 200.</b> We started from TM5's 200. With 20, more of the time goes to writing fresh data, and both of our test faults fail 2–3x sooner (<a href="#results">Results</a>).</li>
+  <li><b>Looking at a block again before refilling it finds errors nothing else sees.</b> On the DDR5 fault this late check found 7–46% of the errors in every run. Before it existed, those blocks were overwritten unchecked.</li>
+  <li><b>Things that didn't help:</b> forcing DRAM reads with <code>clflushopt</code> (half the bandwidth, slower to fail), <code>prefetchnta</code> (doesn't bypass L3 on Zen 3), and an AVX FP heat burst between reads (Karhu 1.1's "Stress FPU" idea). Filling with non-temporal stores (<code>-N</code>) found a tenth of the errors per fill on the DDR5 fault. Shuffled re-read order (<code>-A shuffle</code>) did nothing on DDR4 and raised the DDR5 error rate 2.5x, at 70% of the bandwidth. All stay available as options so they can be re-tested on other machines.</li>
   <li><b>Starting temperature dominates everything we tuned.</b> The same config moved ~3x between days. Every comparison below interleaves contenders in one session.</li>
 </ul>
 <p><b><code>chain</code>.</b> A clean-room reimplementation of the chained transform and checksum technique Karhu RAM Test uses (<a href="https://github.com/Francesco149/memslammer/blob/master/docs/karhu.md">docs/karhu.md</a>). It's kept as a baseline. <code>verify</code> is modelled on the first test of TestMem5's anta777 "Absolut" profile (<a href="https://github.com/Francesco149/memslammer/blob/master/docs/tm5.md">docs/tm5.md</a>), which caught our test OC in 12 of 13 TM5 failures.</p>
 
 <h2 id="results">Results</h2>
-<p>Test box: Ryzen 9 5900X, 2x8 GB DDR4 at 3600 MT/s with <b>tCL 14 / tRCD 14</b> (deliberately too low, otherwise stable settings). No WHEA or machine-check events: the fault is silent data corruption that only a tester sees. The harness stops each tester at its first error and records the timings the memory controller actually ran.</p>
+<p>Every number here is the <b>time to the first error from a cold start</b>, on a setting we made unstable on purpose: two machines, each with one kind of timing set too low and everything else stable. The harness starts each tester over ssh, stops it at its first error, and records the timings the memory controller actually ran.</p>
 
-<h3>Cold-start race: 15 min idle before each run, 3 rounds, order rotated</h3>
+<h3>The two test scenarios</h3>
+<div class="scroll"><table>
+  <tr><th></th><th>DDR4: reads go wrong</th><th>DDR5: stored data goes wrong</th></tr>
+  <tr><td>Machine</td><td>Ryzen 9 5900X, 2x8 GB DDR4 at 3600 MT/s</td><td>Ryzen 7 7800X3D, 2x16 GB DDR5 (SK hynix M-die) at 6000 MT/s, EXPO profile</td></tr>
+  <tr><td>What's set too low</td><td><b>tCL 14 / tRCD 14</b>: the delays before data comes out of a row</td><td><b>tRTP 16</b> (EXPO sets 23): the delay between a read and closing its row</td></tr>
+  <tr><td>What an error looks like</td><td>One read returns a wrong bit; reading the same data again returns it right. Nearly always the same data line (byte 1, bit 7).</td><td>The data in DRAM has changed: every re-read returns the same wrong bits. Nearly always the same byte lane, 2–3 bits at a time.</td></tr>
+  <tr><td>What brings it out</td><td>Reading random data. Low-entropy patterns never failed.</td><td>Writing. Errors scale with how often the memory is filled; re-reading in shuffled order adds more.</td></tr>
+  <tr><td>Temperature</td><td>Seconds to fail when hot, minutes from cold.</td><td>Follows DIMM temperature closely: the error rate rises 5–7x between 40 and 45 °C.</td></tr>
+  <tr><td>Side effects</td><td>None. No WHEA or machine-check events; only a tester sees it.</td><td>Left running hot for 10 minutes it corrupts the operating system too (kernel bad-page reports, broken system tools).</td></tr>
+  <tr><td>A cold start is</td><td>5 minutes idle before each run, about what a trip through UEFI takes.</td><td>Both DIMMs back to about idle temperature (36 °C by their own sensors), then 1 minute idle.</td></tr>
+  <tr><td>Runs on</td><td>Windows, and Linux from our live USB</td><td>Linux from our live USB</td></tr>
+</table></div>
+<p class="note">Within a comparison the contenders take turns, and the order rotates every round, because the same configuration moves 2–3x with the time of day and how long the box has been on.</p>
+
+<h3>Re-reads per fill: why the default is now 20</h3>
+<p><code>verify</code> fills a block once, then re-reads it N times. N was 200 until version 0.2.0. Median time to the first error from cold:</p>
+<p class="note">DDR4 scenario (bad reads), 4 rounds</p>
+<div class="bars">
+  <div class="bar win"><span><b>20 re-reads</b> (default)</span><div class="track"><div class="fill" style="width:52%"></div></div><span class="v">112 s</span></div>
+  <div class="bar"><span>2 re-reads (<code>-r 2</code>)</span><div class="track"><div class="fill" style="width:90%"></div></div><span class="v">194 s</span></div>
+  <div class="bar"><span>200 re-reads (old default)</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">216 s</span></div>
+</div>
+<p class="note">DDR5 scenario (stored data corrupted), 4–5 runs each</p>
+<div class="bars">
+  <div class="bar win"><span><b>20 re-reads</b> (default)</span><div class="track"><div class="fill" style="width:34%"></div></div><span class="v">40 s</span></div>
+  <div class="bar"><span>2 re-reads (<code>-r 2</code>)</span><div class="track"><div class="fill" style="width:6%"></div></div><span class="v">7.5 s</span></div>
+  <div class="bar"><span>200 re-reads (old default)</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">118 s</span></div>
+</div>
+<ul>
+  <li><b>20 beat 200 on both faults.</b> On DDR4 it won all four rounds (97, 113, 111, 181 s against 209, 222, 160, 236 s). On DDR5 every run of 20 (15–48 s over two days) beat every run of 200 (96–139 s, the day before, DIMMs about 1 °C cooler at the start).</li>
+  <li><b>2 re-reads are far faster when writes are the problem, and no better than 200 when reads are.</b> DDR5: 4–21 s over 5 runs. DDR4: 211, 68, 176, 230 s. So 20 is the default, and <code>-r 2</code> is the second thing to try.</li>
+</ul>
+
+<h3>Against Karhu and TM5: DDR4 scenario, 15 min idle, 3 rounds, order rotated</h3>
 <div class="bars">
   <div class="bar win"><span><b>memslammer verify</b></span><div class="track"><div class="fill" style="width:52%"></div></div><span class="v">218 s</span></div>
   <div class="bar"><span>verify, clflushopt</span><div class="track"><div class="fill" style="width:58%"></div></div><span class="v">242 s</span></div>
@@ -177,17 +212,18 @@ RESULT tester=memslammer errors=1 first_error_s=41.993 elapsed_s=42.014</code></
   <div class="bar"><span>memslammer chain</span><div class="track"><div class="fill" style="width:98%"></div></div><span class="v">411 s</span></div>
   <div class="bar"><span>TM5 anta777 Absolut</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">418 s</span></div>
 </div>
-<p class="note">Median time to first error. Per-round times (verify / Karhu / TM5): 394 / 568 / 443, 218 / 368 / 418, 114 / 320 / 319 s. verify was fastest in every round.</p>
+<p class="note">Median time to first error. Per-round times (verify / Karhu / TM5): 394 / 568 / 443, 218 / 368 / 418, 114 / 320 / 319 s. verify was fastest in every round. This race ran with the default of the time, 200 re-reads. Karhu and TM5 have not been raced against the new default, or on the DDR5 box: they are Windows programs and that box ran the Linux live USB.</p>
 
-<h3>Later batches: 5 min idle (the realistic "back from UEFI" case)</h3>
+<h3>Day to day: DDR4 scenario, 5 min idle, 200 re-reads</h3>
 <div class="scroll"><table>
   <tr><th>batch</th><th>runs (s)</th><th class="n">median</th><th>start Tctl</th></tr>
-  <tr><td>Windows, 2026-11-07, 16 MiB blocks</td><td>97, 88, 130, 108, 106, 109</td><td class="n">107 s</td><td>55–57 °C</td></tr>
-  <tr><td>Linux (live USB), 2026-11-09</td><td>278, 196, 226, 170</td><td class="n">211 s</td><td>50–53 °C</td></tr>
+  <tr><td>Windows, 2026-11-07</td><td>97, 88, 130, 108, 106, 109</td><td class="n">107 s</td><td>55–57 °C</td></tr>
+  <tr><td>Linux (Ubuntu live USB), 2026-11-09</td><td>278, 196, 226, 170</td><td class="n">211 s</td><td>50–53 °C</td></tr>
+  <tr><td>Linux (our live USB), 2026-11-10</td><td>209, 222, 160, 236</td><td class="n">216 s</td><td>40–46 °C</td></tr>
   <tr><td>Windows, 2026-11-08</td><td>397, 341, 355, 374, 308, 253, 667, 143</td><td class="n">348 s</td><td>47–55 °C</td></tr>
 </table></div>
-<p>Every run failed, the slowest after 667 s. Throughput and time-to-error are the same on Linux and Windows. The ordering by starting temperature is consistent with the finding that warm DIMMs fail sooner.</p>
-<p class="note">Limits: one machine, one fault type, small samples. Differences under ~1.5x in median are noise at these sample sizes. We found no tRFC setting that fails quickly, so refresh-timing faults are untested.</p>
+<p>Every run failed, the slowest after 667 s. Throughput and time-to-error are the same on Linux and Windows. The same configuration moves about 3x between days, which is why only runs from one session are compared with each other.</p>
+<p class="note">Limits: two machines, two fault types, small samples. Differences under ~1.5x in median are noise at these sample sizes. Both machines are AMD. We found no tRFC setting that fails quickly, so refresh-timing faults are untested.</p>
 
 <h2 id="trust">Why trust it</h2>
 <ul>

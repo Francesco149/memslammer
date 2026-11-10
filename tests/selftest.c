@@ -42,7 +42,7 @@ static void test_config(void)
     ms_config c;
     char err[200];
     ms_config_init(&c);
-    CHECK(c.mode == MS_MODE_VERIFY && c.rereads == 200 && c.pattern == MS_PATTERN_RANDOM && c.late && !c.nt_fill, "defaults");
+    CHECK(c.mode == MS_MODE_VERIFY && c.rereads == 20 && c.pattern == MS_PATTERN_RANDOM && c.late && !c.nt_fill, "defaults");
     char *a1[] = { "-m", "512", "-t", "3", "-M", "chain", "-F", "-s", "-d", "2.5" };
     CHECK(ms_config_parse(&c, 10, a1, err, sizeof err) == 0, "parse: %s", err);
     CHECK(c.megabytes == 512 && c.threads == 3 && c.mode == MS_MODE_CHAIN && !c.flush && c.stop_on_error && c.seconds == 2.5, "parsed values");
@@ -69,11 +69,11 @@ static void test_config(void)
     CHECK(!strcmp(args, "-M chain -m 1024 -t 2 -d 60 -F"), "to_args: '%s'", args);
 
     ms_config_init(&c);
-    char *a5[] = { "-L", "-N", "-r", "20" };
+    char *a5[] = { "-L", "-N", "-r", "7" };
     CHECK(ms_config_parse(&c, 4, a5, err, sizeof err) == 0, "parse: %s", err);
-    CHECK(!c.late && c.nt_fill && c.rereads == 20, "-L -N parsed");
+    CHECK(!c.late && c.nt_fill && c.rereads == 7, "-L -N parsed");
     ms_config_to_args(&c, args, sizeof args);
-    CHECK(!strcmp(args, "-r 20 -L -N"), "to_args: '%s'", args);
+    CHECK(!strcmp(args, "-r 7 -L -N"), "to_args: '%s'", args);
 }
 
 static void test_clean(int mode, int nt_fill)
