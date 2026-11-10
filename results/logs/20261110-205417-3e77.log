@@ -1,0 +1,38 @@
+# & 'C:\msbench\karhu_drv.exe' 'C:\Users\headpats\Documents\_ostools\KarhuSoftware.RAMTest_1.0.0.1\x64\ramtest.dll' 11612 $env:NUMBER_OF_PROCESSORS 1800.0
+     0.43 START tester=karhu mb=11612 threads=24
+    10.48 PROGRESS t=10.1 coverage=0.10 errors=0
+    20.50 PROGRESS t=20.1 coverage=0.21 errors=0
+    30.52 PROGRESS t=30.1 coverage=0.31 errors=0
+    40.55 PROGRESS t=40.1 coverage=0.41 errors=0
+    50.58 PROGRESS t=50.2 coverage=0.52 errors=0
+    60.60 PROGRESS t=60.2 coverage=0.62 errors=0
+    70.63 PROGRESS t=70.2 coverage=0.73 errors=0
+    80.66 PROGRESS t=80.2 coverage=0.83 errors=0
+    90.68 PROGRESS t=90.3 coverage=0.94 errors=0
+   100.71 PROGRESS t=100.3 coverage=1.04 errors=0
+   110.73 PROGRESS t=110.3 coverage=1.15 errors=0
+   120.76 PROGRESS t=120.3 coverage=1.25 errors=0
+   130.79 PROGRESS t=130.4 coverage=1.36 errors=0
+   140.82 PROGRESS t=140.4 coverage=1.46 errors=0
+   150.84 PROGRESS t=150.4 coverage=1.57 errors=0
+   160.87 PROGRESS t=160.5 coverage=1.67 errors=0
+   170.90 PROGRESS t=170.5 coverage=1.78 errors=0
+   180.93 PROGRESS t=180.5 coverage=1.88 errors=0
+   190.96 PROGRESS t=190.5 coverage=1.99 errors=0
+   200.99 PROGRESS t=200.6 coverage=2.09 errors=0
+   211.01 PROGRESS t=210.6 coverage=2.20 errors=0
+   221.04 PROGRESS t=220.6 coverage=2.30 errors=0
+   231.06 PROGRESS t=230.6 coverage=2.41 errors=0
+   241.09 PROGRESS t=240.7 coverage=2.51 errors=0
+   251.12 PROGRESS t=250.7 coverage=2.62 errors=0
+   261.15 PROGRESS t=260.7 coverage=2.72 errors=0
+   271.17 PROGRESS t=270.8 coverage=2.83 errors=0
+   281.20 PROGRESS t=280.8 coverage=2.93 errors=0
+   291.23 PROGRESS t=290.8 coverage=3.04 errors=0
+   301.26 PROGRESS t=300.8 coverage=3.14 errors=0
+   311.29 PROGRESS t=310.9 coverage=3.25 errors=0
+   321.32 PROGRESS t=320.9 coverage=3.35 errors=0
+   331.34 PROGRESS t=330.9 coverage=3.46 errors=0
+   341.36 PROGRESS t=340.9 coverage=3.56 errors=0
+   348.51 ERROR t=348.093 count=1
+   349.61 RESULT tester=karhu errors=1 first_error_s=348.093 elapsed_s=348.093 coverage=3.64

@@ -805,3 +805,78 @@ the new default right after, on the DDR4 box, back to back:
   `0x8000`: one read returned all eight bits of byte 6 flipped, and the two
   re-reads of the same word were right. One event; it has not recurred.
 - The box had idled for an hour before the first run, hence the spread.
+
+## 2026-11-10: the current default against Karhu and TM5, 5 min idle
+
+The 5900X box, back on Windows, Wi-Fi, usual target (`3600 c14 rcd14 rp16
+ras36 rfc324` read back). memslammer with its current defaults (16 MiB
+blocks, 20 re-reads, late check) against Karhu RAM Test 1.0.0.1 and TestMem5
+0.13.1 with anta777 Absolut. The race published so far (2026-11-06/07) used
+4 MiB blocks, 200 re-reads and 15 min idle. Standard protocol: 5 min idle
+before every run, stop at the first error; memslammer and Karhu on 90% of
+free RAM with 24 threads, TM5 sizing itself. Two races in one evening on one
+boot: 6 rounds covering every order of the three, then 3 rotated rounds.
+Seconds to the first error:
+
+| round | memslammer | Karhu | TM5 Absolut | fastest |
+|------:|-----------:|------:|------------:|---------|
+| A1    | ≈191       | 313   | 484         | memslammer |
+| A2    | ≈250       | 266   | 136         | TM5     |
+| A3    | ≈142       | 348   | 443         | memslammer |
+| A4    | ≈158       | 332   | 283         | memslammer |
+| A5    | ≈187       | 473   | 135         | TM5     |
+| A6    | ≈152       | 572   | 215         | memslammer |
+| B1    | 180        | 201   | 270         | memslammer |
+| B2    | 142        | 191   | 79          | TM5     |
+| B3    | 137        | 128   | 316         | Karhu   |
+| **median** | **158** | 313  | 270         |         |
+| range | 137–250    | 128–572 | 79–484    |         |
+
+- **The ≈ times are not recorded results.** In race A the Windows CLI
+  crashed at its first error instead of printing it (see below), so those
+  six are the time the process died, which is within about a second of the
+  error. The harness recorded them as `tester_failed`. Race B ran the fixed
+  binary. Its three times (137–180 s) sit inside race A's range.
+- **memslammer has the best median and by far the narrowest spread**: 158 s
+  against 270 s for TM5 (1.7x) and 313 s for Karhu (2.0x). Its slowest run
+  of nine, 250 s, is faster than either of the others' medians. On race B
+  alone, the only recorded times: 142 s against 191 s (Karhu) and 270 s
+  (TM5), which for Karhu is inside the 1.5x we treat as noise.
+- **It was not the fastest in every round**: 5 of 9, TM5 3, Karhu 1. The
+  2026-11-06/07 race had it first in 3 of 3.
+- **TM5 has the fastest runs and nearly the slowest.** All seven of its
+  runs under 320 s failed in Absolut test 1 (4 MB blocks, 200 re-reads),
+  which opens the sequence; three of them at 79–136 s. The two runs test 1
+  let through failed in test 2 at 443 and 484 s. TM5's time depends on
+  whether test 1 catches the fault in its first slot.
+- **Karhu got faster through the evening** (race A median 340 s, race B
+  191 s) and memslammer barely moved (≈172 s, then 142 s). Start Tctl was
+  51–59 °C in race A and 59–60 °C in race B: the box idled warmer late in
+  the session, and a warmer start helps every tester. Compare within a
+  round.
+- All three of memslammer's recorded errors were bit `0x8000`, `recheck
+  0/2`, on passes 12–18 of 20: the same bad-read fault as before.
+- No WHEA events in any of the 27 runs.
+
+### The Windows CLI crashed on its first error (0.2.0, 0.2.1)
+
+All six memslammer runs of race A ended with exit code `0xC0000005` (access
+violation), no `ERROR` and no `RESULT` line. Run by hand, the same binary
+died the same way after 72 s.
+
+- **Cause**: mingw-w64 gcc keeps the Win64 stack aligned to 16 bytes but
+  uses aligned 32-byte moves for AVX values it stores there (gcc bug
+  54412). The recheck added in 0.2.0 passes the 256-bit mask of differing
+  bits by value and keeps a second one in a local, so the first error
+  stored to a misaligned address. The CLI and the lite GUI share that
+  object file. The full GUI's core is built with MSVC, which aligns the
+  stack. Linux is not affected: every DDR5 and DDR4 run since the recheck
+  went in ran there, which is why this went unnoticed.
+- **Fix**: the error path now carries the mask as four 64-bit words, and
+  the Windows build passes `-Wa,-muse-unaligned-vector-move`, so the
+  assembler turns every aligned vector move into an unaligned one (23 in
+  `engine.o` before, none after). `make test` now also runs the self-test
+  built for Windows under wine when wine is installed.
+- The fixed build passes the self-test on the box itself and reported a
+  real error there (89.8 s, `0x8000`, pass 18, `recheck 0/2`) before race
+  B.

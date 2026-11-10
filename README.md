@@ -9,9 +9,10 @@ make an unstable memory overclock fail **as fast as possible**.
 **[Website](https://francesco149.github.io/memslammer/)** ·
 [raw results](docs/results.md)
 
-- **Fastest from cold** on our DDR4 test box: median 218 s to the first
-  error, against 368 s for Karhu RAM Test and 418 s for TestMem5 anta777
-  Absolut. It won all 3 rounds of the race.
+- **Fastest from cold** on our DDR4 test box: median 158 s to the first
+  error, against 270 s for TestMem5 anta777 Absolut and 313 s for Karhu RAM
+  Test, over 9 rounds. Its slowest run (250 s) beat both of their medians.
+  The previous default won its race too (218 s against 368 s and 418 s).
 - **Since 0.2 the default fails 2–3x sooner still** (20 re-reads per fill
   instead of 200): 112 s against 216 s on a DDR4 fault, 40 s against 118 s
   on a DDR5 one. See [Measurements](#measurements).
@@ -176,19 +177,33 @@ how long the box has been on.
 
 ### Against Karhu and TM5
 
-DDR4 scenario, 15 min idle before each run, 3 rounds, order rotated.
-Median seconds to the first error:
+DDR4 scenario on Windows, current defaults (16 MiB blocks, 20 re-reads),
+5 min idle before each run, 9 rounds with the order rotated. Seconds to the
+first error:
 
-| tester | round 1 | round 2 | round 3 | median |
-|---|---:|---:|---:|---:|
-| **memslammer `verify`** | 394 | 218 | 114 | **218** |
-| Karhu RAM Test | 568 | 368 | 320 | 368 |
-| memslammer `chain` | 682 | 411 | 160 | 411 |
-| TestMem5 anta777 Absolut | 443 | 418 | 319 | 418 |
+| tester | median | range | fastest in |
+|---|---:|---|---:|
+| **memslammer `verify`** | **158** | 137–250 | 5 rounds |
+| TestMem5 anta777 Absolut | 270 | 79–484 | 3 rounds |
+| Karhu RAM Test | 313 | 128–572 | 1 round |
 
-This race ran with the default of the time, 200 re-reads. Karhu and TM5
-have not been raced against the new default, or on the DDR5 box: they are
-Windows programs and that box ran the Linux live USB.
+- **Best median (1.7x and 2x) and the narrowest spread.** memslammer's
+  slowest run was faster than the median of either of the others.
+- **Not the fastest every time.** TM5 had the three quickest runs
+  (79–136 s) when its first test caught the fault at once, and took
+  215–484 s otherwise.
+- Six of the nine memslammer times are approximate: the 0.2.1 Windows CLI
+  crashed at its first error instead of printing it (fixed in 0.2.2), so
+  those are the time the process died. The three recorded times with the
+  fix were 137, 142 and 180 s. Per-round times are in
+  [docs/results.md](docs/results.md).
+
+The earlier race, with the first default (4 MiB blocks, 200 re-reads) and
+15 min idle, 3 rounds: `verify` 394, 218, 114 s; Karhu 568, 368, 320 s; TM5
+443, 418, 319 s. `verify` was fastest in every round there.
+
+Karhu and TM5 have not been run on the DDR5 box: they are Windows programs
+and that box ran the Linux live USB.
 
 Limits: two machines, both AMD, two fault types, small samples. Differences
 under ~1.5x in median are noise at these sample sizes. We found no tRFC
@@ -199,11 +214,11 @@ setting that fails quickly, so refresh-timing faults are untested.
 - [x] Karhu RAM Test algorithm documented: [docs/karhu.md](docs/karhu.md)
 - [x] TestMem5 MT0 test functions and the Absolut profile documented: [docs/tm5.md](docs/tm5.md)
 - [x] Benchmark harness (Karhu, TM5, memslammer; crash/reboot aware)
-- [x] `verify` mode, fastest from cold (median 218 s vs Karhu 368 s, TM5 418 s)
+- [x] `verify` mode, fastest from cold (median 158 s vs TM5 270 s, Karhu 313 s; old default 218 s vs 368 s, 418 s)
 - [x] Linux: fails as fast as on Windows (median 211 s, 4/4)
 - [x] DDR5 (7800X3D): a tRTP fault found in 40 s; late check; `-r 20` the default (2–3x sooner on both test faults)
 - [x] Core library + CLI, lite (Win32/GTK) and full (gpui) frontends; CI releases
-- [ ] Test on more machines and fault types (refresh timings, Intel); race Karhu and TM5 against the new default
+- [ ] Test on more machines and fault types (refresh timings, Intel)
 
 ## Building
 

@@ -107,7 +107,7 @@ and kept only what measurably shortened time-to-first-error on real unstable set
 
 <div class="facts">
   <div><b>2x and 3x</b>sooner to the first error than the previous default, on our DDR4 and DDR5 test faults (112 vs 216 s, 40 vs 118 s)</div>
-  <div><b>218 s</b>median from cold in the three-way race, vs 368 s Karhu and 418 s TM5 Absolut; won all 3 rounds (previous default)</div>
+  <div><b>158 s</b>median from cold over 9 rounds, vs 270 s TM5 Absolut and 313 s Karhu; our slowest run (250 s) beat both of their medians</div>
   <div><b>51 and 75 GB/s</b>sustained read+write: 5900X with DDR4-3600, 7800X3D with DDR5-6000</div>
   <div><b>84 KB</b>static Linux CLI; the Windows CLI + native GUI zip is ~150 KB</div>
 </div>
@@ -204,15 +204,14 @@ RESULT tester=memslammer errors=1 first_error_s=31.415 elapsed_s=31.452</code></
   <li><b>2 re-reads are far faster when writes are the problem, and no better than 200 when reads are.</b> DDR5: 4–21 s over 5 runs. DDR4: 211, 68, 176, 230 s. So 20 is the default, and <code>-r 2</code> is the second thing to try.</li>
 </ul>
 
-<h3>Against Karhu and TM5: DDR4 scenario, 15 min idle, 3 rounds, order rotated</h3>
+<h3>Against Karhu and TM5: DDR4 scenario, current defaults, 5 min idle, 9 rounds, order rotated</h3>
 <div class="bars">
-  <div class="bar win"><span><b>memslammer verify</b></span><div class="track"><div class="fill" style="width:52%"></div></div><span class="v">218 s</span></div>
-  <div class="bar"><span>verify, clflushopt</span><div class="track"><div class="fill" style="width:58%"></div></div><span class="v">242 s</span></div>
-  <div class="bar"><span>Karhu RAM Test</span><div class="track"><div class="fill" style="width:88%"></div></div><span class="v">368 s</span></div>
-  <div class="bar"><span>memslammer chain</span><div class="track"><div class="fill" style="width:98%"></div></div><span class="v">411 s</span></div>
-  <div class="bar"><span>TM5 anta777 Absolut</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">418 s</span></div>
+  <div class="bar win"><span><b>memslammer verify</b></span><div class="track"><div class="fill" style="width:50%"></div></div><span class="v">158 s</span></div>
+  <div class="bar"><span>TM5 anta777 Absolut</span><div class="track"><div class="fill" style="width:86%"></div></div><span class="v">270 s</span></div>
+  <div class="bar"><span>Karhu RAM Test</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">313 s</span></div>
 </div>
-<p class="note">Median time to first error. Per-round times (verify / Karhu / TM5): 394 / 568 / 443, 218 / 368 / 418, 114 / 320 / 319 s. verify was fastest in every round. This race ran with the default of the time, 200 re-reads. Karhu and TM5 have not been raced against the new default, or on the DDR5 box: they are Windows programs and that box ran the Linux live USB.</p>
+<p class="note">Median time to first error on Windows. Ranges: verify 137–250 s, TM5 79–484 s, Karhu 128–572 s. verify was fastest in 5 of the 9 rounds, TM5 in 3, Karhu in 1; TM5 had the three quickest runs (79–136 s) when its first test caught the fault at once. Six of the nine verify times are approximate: the 0.2.1 Windows CLI crashed at its first error instead of printing it (fixed in 0.2.2), so those are the time the process died; the three recorded with the fix were 137, 142 and 180 s. Per-round times are in <a href="https://github.com/Francesco149/memslammer/blob/master/docs/results.md">docs/results.md</a>.</p>
+<p class="note">The earlier race, with the first default (4 MiB blocks, 200 re-reads) and 15 min idle: verify 218 s median against 368 s for Karhu and 418 s for TM5, fastest in all 3 rounds (394 / 568 / 443, 218 / 368 / 418, 114 / 320 / 319 s). Karhu and TM5 have not been run on the DDR5 box: they are Windows programs and that box ran the Linux live USB.</p>
 
 <h3>Day to day: DDR4 scenario, 5 min idle, 200 re-reads</h3>
 <div class="scroll"><table>

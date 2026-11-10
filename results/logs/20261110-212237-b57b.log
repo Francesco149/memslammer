@@ -1,0 +1,37 @@
+# & 'C:\msbench\karhu_drv.exe' 'C:\Users\headpats\Documents\_ostools\KarhuSoftware.RAMTest_1.0.0.1\x64\ramtest.dll' 11644 $env:NUMBER_OF_PROCESSORS 1800.0
+     0.62 START tester=karhu mb=11644 threads=24
+    10.66 PROGRESS t=10.0 coverage=0.10 errors=0
+    20.69 PROGRESS t=20.1 coverage=0.20 errors=0
+    30.72 PROGRESS t=30.1 coverage=0.30 errors=0
+    40.75 PROGRESS t=40.1 coverage=0.41 errors=0
+    50.78 PROGRESS t=50.2 coverage=0.51 errors=0
+    60.81 PROGRESS t=60.2 coverage=0.62 errors=0
+    70.83 PROGRESS t=70.2 coverage=0.72 errors=0
+    80.85 PROGRESS t=80.2 coverage=0.83 errors=0
+    90.88 PROGRESS t=90.3 coverage=0.93 errors=0
+   100.90 PROGRESS t=100.3 coverage=1.03 errors=0
+   110.93 PROGRESS t=110.3 coverage=1.14 errors=0
+   120.97 PROGRESS t=120.4 coverage=1.24 errors=0
+   130.99 PROGRESS t=130.4 coverage=1.35 errors=0
+   141.02 PROGRESS t=140.4 coverage=1.45 errors=0
+   151.04 PROGRESS t=150.4 coverage=1.56 errors=0
+   161.08 PROGRESS t=160.5 coverage=1.67 errors=0
+   171.10 PROGRESS t=170.5 coverage=1.77 errors=0
+   181.13 PROGRESS t=180.5 coverage=1.87 errors=0
+   191.15 PROGRESS t=190.5 coverage=1.98 errors=0
+   201.17 PROGRESS t=200.6 coverage=2.08 errors=0
+   211.20 PROGRESS t=210.6 coverage=2.19 errors=0
+   221.22 PROGRESS t=220.6 coverage=2.29 errors=0
+   231.25 PROGRESS t=230.6 coverage=2.40 errors=0
+   241.28 PROGRESS t=240.7 coverage=2.50 errors=0
+   251.30 PROGRESS t=250.7 coverage=2.61 errors=0
+   261.33 PROGRESS t=260.7 coverage=2.71 errors=0
+   271.35 PROGRESS t=270.7 coverage=2.82 errors=0
+   281.38 PROGRESS t=280.8 coverage=2.92 errors=0
+   291.41 PROGRESS t=290.8 coverage=3.03 errors=0
+   301.44 PROGRESS t=300.8 coverage=3.13 errors=0
+   311.46 PROGRESS t=310.8 coverage=3.24 errors=0
+   321.49 PROGRESS t=320.9 coverage=3.34 errors=0
+   331.53 PROGRESS t=330.9 coverage=3.45 errors=0
+   332.42 ERROR t=331.798 count=1
+   333.60 RESULT tester=karhu errors=1 first_error_s=331.798 elapsed_s=331.798 coverage=3.46
