@@ -11,3 +11,5 @@ __pycache__/
 gui/target/
 dist/
 live/local/
+# sampler logs still being written (bench.py --sample)
+results/samples/.tmp-*

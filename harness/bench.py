@@ -9,6 +9,8 @@ with PowerShell) unless MSBENCH_OS=linux (root login, POSIX shell).
   bench.py state                        show remote state (free RAM, busy testers)
   bench.py timings                      show the DRAM timings the IMC is running (PawnIO)
   bench.py run TESTER [opts] [-- args]  run one tester, append to results/runs.jsonl
+                                        (--gate-dimm C and --sample: start from a known
+                                        DIMM temperature and log it, DDR5 on Linux)
   bench.py summary                      aggregate results per label/tester
 
 TESTER is one of:
@@ -17,6 +19,7 @@ TESTER is one of:
   memslammer             our tester; args after -- are passed through
 """
 import argparse
+import atexit
 import datetime as dt
 import json
 import os
@@ -109,6 +112,64 @@ def timings_label(t):
     if not c:
         return ""
     return f"{c['mts']} c{c['cl']} rcd{c['rcdrd']} rp{c['rp']} ras{c['ras']} rfc{c['rfc']}"
+
+
+DIMM_TEMPS = ('for h in /sys/class/hwmon/hwmon*; do [ "$(cat $h/name)" = spd5118 ] && '
+              'cat $h/temp1_input; done; true')
+
+
+def remote_dimm_temps():
+    """DDR5 DIMM temperatures in degC (spd5118 sensors, Linux); [] if there are none."""
+    if not LINUX:
+        return []
+    try:
+        rc, out = ssh_run(DIMM_TEMPS, timeout=20)
+    except subprocess.TimeoutExpired:
+        return []
+    return [int(l) / 1000 for l in out if l.strip().lstrip("-").isdigit()]
+
+
+def gate_dimm(limit, max_wait):
+    """Wait until every DIMM reads <= limit degC. A fixed idle time starts runs
+    at different temperatures, depending on how hot the last run left the DIMMs."""
+    t0 = time.monotonic()
+    while True:
+        temps = remote_dimm_temps()
+        if not temps:
+            sys.exit("--gate-dimm: no DIMM temperature sensors (needs DDR5 and the spd5118 driver)")
+        waited = time.monotonic() - t0
+        if max(temps) <= limit:
+            print(f"   gate: DIMMs {temps} C <= {limit} C after {waited:.0f}s", flush=True)
+            return
+        if waited >= max_wait:
+            print(f"   gate: gave up after {waited:.0f}s at {temps} C", flush=True)
+            return
+        time.sleep(20)
+
+
+def sampler_start():
+    """Stream sampler.sh (1 Hz temperatures) from the box into a local file, so a
+    crash of the box doesn't lose it. Returns (process, path)."""
+    d = RESULTS / "samples"
+    d.mkdir(parents=True, exist_ok=True)
+    path = d / f".tmp-{uuid.uuid4().hex[:8]}.tsv"
+    p = subprocess.Popen(SSH + [HOST, f"sh {shlex.quote(RDIR + '/sampler.sh')} /dev/stdout"],
+                         stdout=open(path, "w"), stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL)
+    atexit.register(p.terminate)   # also when the harness gives up before the run
+    return p, path
+
+
+def sampler_stop(samp, run_id):
+    p, path = samp
+    try:
+        ssh_run(r"pkill -f '[s]ampler\.sh'", timeout=20)
+    except subprocess.TimeoutExpired:
+        pass
+    p.terminate()
+    p.wait()
+    final = path.with_name(f"{run_id}.tsv")
+    path.rename(final)
+    return final
 
 
 def remote_events(since_utc):
@@ -220,6 +281,11 @@ def run_once(a, idx):
         sys.exit("remote host unreachable")
     if state["busy"] and not a.force:
         sys.exit(f"refusing to run: already running on {HOST}: {', '.join(state['busy'])} (use --force)")
+    if a.sample and not LINUX:
+        sys.exit("--sample needs a Linux target")
+    if a.gate_dimm is not None:
+        gate_dimm(a.gate_dimm, a.gate_wait)
+    samp = sampler_start() if a.sample else None
     if a.idle:
         print(f"   idle {a.idle:.0f}s so the DIMMs cool down", flush=True)
         time.sleep(a.idle)
@@ -229,6 +295,7 @@ def run_once(a, idx):
         if state["busy"] and not a.force:
             sys.exit(f"something started during idle: {', '.join(state['busy'])}")
     timings = remote_timings()
+    dimm_start = remote_dimm_temps()
     label = a.label or timings_label(timings)
     if a.warmup:
         print(f"   warm-up: memslammer chain {a.warmup:.0f}s (not recorded)", flush=True)
@@ -282,6 +349,10 @@ def run_once(a, idx):
            "wall_s": round(wall, 2), "free_mb_before": int(state["free_mb"]),
            "mem": {"mts": state.get("mts"), "dimms": state.get("dimms")},
            "timings": timings, "warmup_s": a.warmup, "idle_s": a.idle, "rate_mode": a.rate}
+    if a.gate_dimm is not None:
+        rec["gate_dimm_c"] = a.gate_dimm
+    if dimm_start:
+        rec["dimm_start_c"] = dimm_start
     if result and "errors" in result:
         errs = int(result["errors"])
         rec["errors"] = errs
@@ -315,8 +386,13 @@ def run_once(a, idx):
         else:
             rec["first_error_s"] = round(last_out, 1)   # approx: last output before loss
     if rec["outcome"] != "host_down":
+        dimm_end = remote_dimm_temps()
+        if dimm_end:
+            rec["dimm_end_c"] = dimm_end
         rec["events"] = remote_events(start_utc)
         rec["tctl_end"] = remote_timings().get("tctl")
+    if samp:
+        rec["samples"] = "results/samples/" + sampler_stop(samp, run_id).name
     rec["tctl_start"] = timings.get("tctl")
     with open(RESULTS / "runs.jsonl", "a") as f:
         f.write(json.dumps(rec) + "\n")
@@ -384,6 +460,11 @@ def main():
     r.add_argument("--label", default="", help="describe the memory settings (default: read from the IMC)")
     r.add_argument("--warmup", type=float, default=0, help="run memslammer chain this many seconds first (unrecorded)")
     r.add_argument("--idle", type=float, default=0, help="sleep this many seconds first so the box is cold (cold-start runs)")
+    r.add_argument("--gate-dimm", type=float, metavar="C",
+                   help="first wait until every DDR5 DIMM reads <= C degC (Linux; before --idle)")
+    r.add_argument("--gate-wait", type=float, default=1200, help="give up on --gate-dimm after this many seconds")
+    r.add_argument("--sample", action="store_true",
+                   help="log temperatures at 1 Hz to results/samples/<run id>.tsv, from before --idle (Linux)")
     r.add_argument("--rate", action="store_true", help="don't stop at the first error; record error times and errors/min")
     r.add_argument("--notes", default="")
     r.add_argument("--repeat", type=int, default=1)

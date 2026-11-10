@@ -74,7 +74,7 @@ Real output from the test box (warm, unstable setting):
 
 ```
 > memslammer -s
-memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1
+memslammer verify: 9984 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
 [     10.1s] cycles 0, coverage 26.9%, 57.90 GB/s, errors 0
 [     20.2s] cycles 0, coverage 53.8%, 57.97 GB/s, errors 0
 [     30.2s] cycles 0, coverage 80.8%, 57.86 GB/s, errors 0
@@ -94,6 +94,9 @@ The GUIs show the equivalent CLI command for their settings.
 a block with random data (xoshiro256\*\*, fresh seed per block), then
 re-reads and compares it 200 times. The expected values are regenerated on
 the fly, so there's no second copy to read. Any mismatch is an error.
+A cycle later, just before the block is filled again, it's compared once
+more: by then the data has sat in DRAM unread while the rest of the memory
+was being tested, which is what shows a refresh or retention problem.
 
 What mattered, from [docs/results.md](docs/results.md):
 
@@ -230,6 +233,13 @@ harness/bench.py run memslammer --idle 300
   and memory-failure messages (WHEA's role on Windows), and `oops` counts
   kernel oopses and segfaults.
 - Records carry `"os": "linux"`, and `summary` lists them separately.
+- DDR5 DIMMs have a temperature sensor (`spd5118` driver), and on DDR5 the
+  error rate follows it closely. `--gate-dimm 35` waits until every DIMM
+  reads 35 °C or less before the run (then `--idle`), so runs start equally
+  cold however hot the last one left them. `--sample` logs Tctl, the DIMM
+  temperatures and the CPU clock once a second to
+  `results/samples/<run id>.tsv`, streamed off the box so a crash doesn't
+  lose it. Records carry `dimm_start_c` and `dimm_end_c`.
 
 ### Live USB
 
