@@ -12,7 +12,7 @@ make an unstable memory overclock fail **as fast as possible**.
 - **Fastest from cold** on our DDR4 test box: median 218 s to the first
   error, against 368 s for Karhu RAM Test and 418 s for TestMem5 anta777
   Absolut. It won all 3 rounds of the race.
-- **Since 0.2.0 the default fails 2–3x sooner still** (20 re-reads per fill
+- **Since 0.2 the default fails 2–3x sooner still** (20 re-reads per fill
   instead of 200): 112 s against 216 s on a DDR4 fault, 40 s against 118 s
   on a DDR5 one. See [Measurements](#measurements).
 - **Three frontends, one engine**: a CLI, a tiny native window, and a full
@@ -159,7 +159,7 @@ how long the box has been on.
 ### Re-reads per fill: why the default is now 20
 
 `verify` fills a block once, then re-reads it N times. N was 200 until
-0.2.0. Median seconds to the first error from cold:
+0.2. Median seconds to the first error from cold:
 
 | scenario | 20 (default) | 2 (`-r 2`) | 200 (old default) |
 |---|---:|---:|---:|

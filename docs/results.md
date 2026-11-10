@@ -792,7 +792,7 @@ Taken together with the DDR5 box:
 the default on both faults. `-r 2` is much the fastest on one and no
 better than the default on the other.
 
-`verify` now defaults to 20 re-reads per fill (0.2.0). Three warm runs with
+`verify` now defaults to 20 re-reads per fill (since 0.2). Three warm runs with
 the new default right after, on the DDR4 box, back to back:
 
 | run | first error | bits | pass | recheck |

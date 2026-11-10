@@ -186,7 +186,7 @@ RESULT tester=memslammer errors=1 first_error_s=31.415 elapsed_s=31.452</code></
 <p class="note">Within a comparison the contenders take turns, and the order rotates every round, because the same configuration moves 2–3x with the time of day and how long the box has been on.</p>
 
 <h3>Re-reads per fill: why the default is now 20</h3>
-<p><code>verify</code> fills a block once, then re-reads it N times. N was 200 until version 0.2.0. Median time to the first error from cold:</p>
+<p><code>verify</code> fills a block once, then re-reads it N times. N was 200 until version 0.2. Median time to the first error from cold:</p>
 <p class="note">DDR4 scenario (bad reads), 4 rounds</p>
 <div class="bars">
   <div class="bar win"><span><b>20 re-reads</b> (default)</span><div class="track"><div class="fill" style="width:52%"></div></div><span class="v">112 s</span></div>

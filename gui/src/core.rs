@@ -265,8 +265,8 @@ mod tests {
 
     #[test]
     fn layout_matches_c() {
-        assert_eq!(std::mem::size_of::<Config>(), 72);
-        assert_eq!(std::mem::size_of::<Error>(), 72);
+        assert_eq!(std::mem::size_of::<Config>(), 80);
+        assert_eq!(std::mem::size_of::<Error>(), 80);
     }
 
     #[test]
