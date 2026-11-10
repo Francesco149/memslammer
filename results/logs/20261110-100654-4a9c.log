@@ -1,0 +1,43 @@
+# /root/msbench/memslammer -m 27336 -d 120.0 -M verify -r 2 -N
+     0.10 memslammer verify: 27136 MB, 16 threads, block 16777216, rereads 2, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill nt
+    11.12 [     10.0s] cycles 80, coverage 586.6%, 63.65 GB/s, errors 0
+    21.14 [     20.1s] cycles 176, coverage 1145.8%, 63.47 GB/s, errors 0
+    27.55 [   26.444s] ERROR thread 12 cycle 13 (total 1) bits 0x0000000000060000 pass late recheck 2/2
+    31.16 [     30.1s] cycles 267, coverage 1704.9%, 63.52 GB/s, errors 1
+    39.88 [   38.749s] ERROR thread 0 cycle 21 (total 2) bits 0x00000000000a0000 pass 0 recheck 2/2
+    41.18 [     40.1s] cycles 352, coverage 2265.5%, 63.69 GB/s, errors 2
+    51.20 [     50.1s] cycles 447, coverage 2826.3%, 63.72 GB/s, errors 2
+    61.22 [     60.1s] cycles 530, coverage 3386.1%, 63.58 GB/s, errors 2
+    67.03 [   65.957s] ERROR thread 11 cycle 36 (total 3) bits 0x0000000000410000 pass late recheck 2/2
+    69.33 [   68.253s] ERROR thread 13 cycle 38 (total 4) bits 0x00000000001c0000 pass 1 recheck 2/2
+    71.24 [     70.2s] cycles 624, coverage 3946.6%, 63.68 GB/s, errors 4
+    79.65 [   78.501s] ERROR thread 2 cycle 43 (total 5) bits 0x0000000000830000 pass 0 recheck 2/2
+    81.26 [     80.2s] cycles 716, coverage 4507.1%, 63.67 GB/s, errors 6
+    81.26 [   80.163s] ERROR thread 5 cycle 45 (total 6) bits 0x00c0000000080000 pass 1 recheck 2/2
+    83.76 [   82.641s] ERROR thread 13 cycle 46 (total 7) bits 0x0000000000090000 pass 1 recheck 2/2
+    84.76 [   83.689s] ERROR thread 5 cycle 46 (total 8) bits 0x00c0000000080000 pass late recheck 2/2
+    87.27 [   86.137s] ERROR thread 12 cycle 47 (total 9) bits 0x0000000000c80000 pass late recheck 2/2
+    90.17 [   89.069s] ERROR thread 11 cycle 48 (total 10) bits 0x0020000000400000 pass late recheck 2/2
+    91.18 [   90.023s] ERROR thread 0 cycle 50 (total 11) bits 0x0082000000820000 pass 1 recheck 2/2
+    91.28 [     90.2s] cycles 801, coverage 5069.9%, 63.92 GB/s, errors 11
+    91.98 [   90.845s] ERROR thread 2 cycle 50 (total 12) bits 0x0000000000a00000 pass 0 recheck 2/2
+    92.08 [   90.966s] ERROR thread 5 cycle 50 (total 13) bits 0x0000000000a00000 pass late recheck 2/2
+    92.08 [   90.975s] ERROR thread 10 cycle 49 (total 14) bits 0x0000000000410000 pass late recheck 2/2
+    93.78 [   92.638s] ERROR thread 5 cycle 52 (total 15) bits 0x0042000000100000 pass 0 recheck 2/2
+    98.89 [   97.727s] ERROR thread 12 cycle 54 (total 16) bits 0x0060000000000000 pass 0 recheck 2/2
+   100.61 [   99.529s] ERROR thread 2 cycle 54 (total 17) bits 0x0020000000020000 pass late recheck 2/2
+   101.11 [   99.939s] ERROR thread 5 cycle 56 (total 18) bits 0x0021000000100000 pass 1 recheck 2/2
+   101.31 [    100.2s] cycles 895, coverage 5631.0%, 63.66 GB/s, errors 18
+   102.31 [  101.212s] ERROR thread 13 cycle 56 (total 19) bits 0x0002000000040000 pass late recheck 2/2
+   107.82 [  106.741s] ERROR thread 3 cycle 59 (total 20) bits 0x0000000000e00000 pass late recheck 2/2
+   107.92 [  106.808s] ERROR thread 3 cycle 60 (total 21) bits 0x0000000000a00000 pass 0 recheck 2/2
+   109.52 [  108.373s] ERROR thread 2 cycle 59 (total 22) bits 0x0000000000600000 pass late recheck 2/2
+   109.93 [  108.822s] ERROR thread 11 cycle 59 (total 23) bits 0x0018000000040000 pass late recheck 2/2
+   111.33 [    110.3s] cycles 982, coverage 6193.3%, 63.84 GB/s, errors 23
+   111.63 [  110.465s] ERROR thread 3 cycle 62 (total 24) bits 0x0006000000000000 pass 1 recheck 2/2
+   115.03 [  113.908s] ERROR thread 2 cycle 63 (total 25) bits 0x0001000000400000 pass 0 recheck 2/2
+   117.04 [  115.871s] ERROR thread 12 cycle 65 (total 26) bits 0x0020000000020000 pass 0 recheck 2/2
+   120.64 [  119.529s] ERROR thread 4 cycle 66 (total 27) bits 0x0002000000040000 pass 0 recheck 2/2
+   121.05 [  119.891s] ERROR thread 0 cycle 66 (total 28) bits 0x0000000000840000 pass late recheck 2/2
+   121.15 [    120.0s] cycles 1071, coverage 6739.1%, 63.70 GB/s, errors 28
+   121.15 RESULT tester=memslammer errors=28 first_error_s=26.444 elapsed_s=120.015

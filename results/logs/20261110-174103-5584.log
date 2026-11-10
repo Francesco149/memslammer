@@ -1,0 +1,27 @@
+# /root/msbench/memslammer -m 13819 -d 900.0 -s -M verify
+     0.12 memslammer verify: 13440 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
+    10.65 [     10.0s] cycles 0, coverage 17.4%, 54.42 GB/s, errors 0
+    20.66 [     20.0s] cycles 0, coverage 37.1%, 55.53 GB/s, errors 0
+    30.68 [     30.0s] cycles 0, coverage 56.9%, 55.35 GB/s, errors 0
+    40.70 [     40.1s] cycles 0, coverage 76.9%, 55.69 GB/s, errors 0
+    50.72 [     50.1s] cycles 6, coverage 96.7%, 55.85 GB/s, errors 0
+    60.74 [     60.1s] cycles 24, coverage 116.2%, 55.82 GB/s, errors 0
+    70.76 [     70.1s] cycles 24, coverage 135.7%, 55.67 GB/s, errors 0
+    80.78 [     80.1s] cycles 24, coverage 155.4%, 56.07 GB/s, errors 0
+    90.80 [     90.2s] cycles 24, coverage 175.0%, 56.07 GB/s, errors 0
+   100.82 [    100.2s] cycles 30, coverage 195.0%, 56.03 GB/s, errors 0
+   110.84 [    110.2s] cycles 48, coverage 214.8%, 55.46 GB/s, errors 0
+   120.85 [    120.2s] cycles 48, coverage 234.3%, 56.34 GB/s, errors 0
+   130.87 [    130.2s] cycles 48, coverage 254.4%, 56.25 GB/s, errors 0
+   140.89 [    140.2s] cycles 48, coverage 273.7%, 56.04 GB/s, errors 0
+   150.91 [    150.3s] cycles 54, coverage 293.6%, 56.20 GB/s, errors 0
+   160.93 [    160.3s] cycles 68, coverage 313.1%, 55.96 GB/s, errors 0
+   170.95 [    170.3s] cycles 72, coverage 333.2%, 56.12 GB/s, errors 0
+   180.97 [    180.3s] cycles 72, coverage 352.9%, 55.69 GB/s, errors 0
+   190.99 [    190.3s] cycles 74, coverage 372.3%, 55.78 GB/s, errors 0
+   201.01 [    200.4s] cycles 78, coverage 392.1%, 56.01 GB/s, errors 0
+   211.02 [    210.4s] cycles 88, coverage 411.2%, 55.79 GB/s, errors 0
+   221.04 [    220.4s] cycles 96, coverage 431.5%, 56.14 GB/s, errors 0
+   222.95 [  222.296s] ERROR thread 1 cycle 4 (total 1) bits 0x0000000000008000 pass 110 recheck 0/2
+   223.04 [    222.3s] cycles 96, coverage 435.1%, 56.30 GB/s, errors 1
+   223.04 RESULT tester=memslammer errors=1 first_error_s=222.296 elapsed_s=222.308

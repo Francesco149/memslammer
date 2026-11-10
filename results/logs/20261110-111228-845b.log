@@ -1,0 +1,143 @@
+# /root/msbench/memslammer -m 27314 -d 120.0 -M verify -r 5 -A shuffle
+     0.09 memslammer verify: 27136 MB, 16 threads, block 16777216, rereads 5, pattern random, cache none, order shuffle, heat 0, yield 1, late 1, fill store
+     7.80 [    6.668s] ERROR thread 2 cycle 1 (total 1) bits 0x0000000000310000 pass 2 recheck 2/2
+    11.10 [     10.0s] cycles 32, coverage 261.2%, 49.08 GB/s, errors 1
+    13.11 [   11.959s] ERROR thread 13 cycle 3 (total 2) bits 0x0012000000000000 pass 0 recheck 2/2
+    21.12 [     20.1s] cycles 80, coverage 512.9%, 50.05 GB/s, errors 2
+    24.83 [   23.707s] ERROR thread 11 cycle 5 (total 3) bits 0x0090000000000000 pass 0 recheck 2/2
+    28.04 [   26.879s] ERROR thread 14 cycle 5 (total 4) bits 0x0088000000400000 pass late recheck 2/2
+    30.64 [   29.517s] ERROR thread 8 cycle 7 (total 5) bits 0x0090000000000000 pass 0 recheck 2/2
+    31.14 [     30.1s] cycles 112, coverage 765.0%, 50.09 GB/s, errors 5
+    31.44 [   30.284s] ERROR thread 3 cycle 7 (total 6) bits 0x0020000000020000 pass 0 recheck 2/2
+    39.25 [   38.115s] ERROR thread 2 cycle 9 (total 7) bits 0x0000000000280000 pass 3 recheck 2/2
+    39.95 [   38.850s] ERROR thread 15 cycle 9 (total 8) bits 0x0020000000020000 pass 0 recheck 2/2
+    41.15 [     40.1s] cycles 159, coverage 1017.0%, 50.12 GB/s, errors 8
+    43.25 [   42.106s] ERROR thread 2 cycle 9 (total 9) bits 0x0000000000060000 pass late recheck 2/2
+    46.05 [   44.940s] ERROR thread 7 cycle 11 (total 10) bits 0x0002000000040000 pass 0 recheck 2/2
+    46.66 [   45.505s] ERROR thread 3 cycle 11 (total 11) bits 0x0000000000060000 pass 2 recheck 2/2
+    46.96 [   45.823s] ERROR thread 2 cycle 11 (total 12) bits 0x0000000000010000 pass 0 recheck 2/2
+    49.76 [   48.689s] ERROR thread 12 cycle 12 (total 13) bits 0x0004000000040000 pass 0 recheck 2/2
+    50.66 [   49.592s] ERROR thread 2 cycle 12 (total 14) bits 0x0082000000010000 pass 0 recheck 2/2
+    51.16 [     50.1s] cycles 192, coverage 1268.4%, 50.00 GB/s, errors 14
+    52.96 [   51.869s] ERROR thread 0 cycle 13 (total 15) bits 0x0000000000600000 pass 0 recheck 2/2
+    53.56 [   52.408s] ERROR thread 12 cycle 13 (total 16) bits 0x0004000000040000 pass 0 recheck 2/2
+    54.26 [   53.174s] ERROR thread 2 cycle 12 (total 17) bits 0x00000000001c0000 pass late recheck 2/2
+    54.37 [   53.221s] ERROR thread 2 cycle 13 (total 18) bits 0x0000000000280000 pass 0 recheck 2/2
+    54.77 [   53.689s] ERROR thread 2 cycle 12 (total 19) bits 0x0000000000310000 pass late recheck 2/2
+    56.77 [   55.651s] ERROR thread 10 cycle 13 (total 20) bits 0x0004000000c80000 pass 0 recheck 2/2
+    58.77 [   57.655s] ERROR thread 13 cycle 14 (total 21) bits 0x0040000000000000 pass 0 recheck 2/2
+    61.17 [     60.1s] cycles 239, coverage 1520.7%, 50.14 GB/s, errors 21
+    62.78 [   61.620s] ERROR thread 10 cycle 15 (total 22) bits 0x0021000000100000 pass 0 recheck 2/2
+    62.97 [   61.890s] ERROR thread 0 cycle 15 (total 23) bits 0x0000000000a00000 pass 1 recheck 2/2
+    64.68 [   63.550s] ERROR thread 10 cycle 15 (total 24) bits 0x0044000000dc0000 pass 2 recheck 2/2
+    66.48 [   65.381s] ERROR thread 2 cycle 16 (total 25) bits 0x00000000001c0000 pass 0 recheck 2/2
+    66.68 [   65.559s] ERROR thread 2 cycle 16 (total 26) bits 0x00000000001c0000 pass 3 recheck 2/2
+    66.88 [   65.776s] ERROR thread 2 cycle 15 (total 27) bits 0x0000000000310000 pass late recheck 2/2
+    67.58 [   66.476s] ERROR thread 8 cycle 17 (total 28) bits 0x0000000000830000 pass 0 recheck 2/2
+    68.38 [   67.284s] ERROR thread 15 cycle 17 (total 29) bits 0x0000000000500000 pass 1 recheck 2/2
+    68.68 [   67.603s] ERROR thread 10 cycle 16 (total 30) bits 0x0000000000440000 pass 0 recheck 2/2
+    68.98 [   67.862s] ERROR thread 8 cycle 17 (total 31) bits 0x0042000000000000 pass 1 recheck 2/2
+    70.59 [   69.473s] ERROR thread 3 cycle 17 (total 32) bits 0x0000000000060000 pass 1 recheck 2/2
+    71.19 [     70.1s] cycles 273, coverage 1773.1%, 50.15 GB/s, errors 32
+    72.59 [   71.494s] ERROR thread 10 cycle 17 (total 33) bits 0x0018000000040000 pass 4 recheck 2/2
+    73.29 [   72.202s] ERROR thread 8 cycle 18 (total 34) bits 0x0011000000200000 pass 0 recheck 2/2
+    74.49 [   73.355s] ERROR thread 2 cycle 18 (total 35) bits 0x00000000001c0000 pass 4 recheck 2/2
+    75.29 [   74.166s] ERROR thread 0 cycle 18 (total 36) bits 0x0030000000010000 pass 0 recheck 2/2
+    75.90 [   74.746s] ERROR thread 0 cycle 18 (total 37) bits 0x0020000000040000 pass 1 recheck 2/2
+    76.80 [   75.708s] ERROR thread 10 cycle 19 (total 38) bits 0x0004000000800000 pass 1 recheck 2/2
+    76.90 [   75.807s] ERROR thread 15 cycle 19 (total 39) bits 0x00c0000000080000 pass 0 recheck 2/2
+    77.40 [   76.266s] ERROR thread 8 cycle 19 (total 40) bits 0x0000000000410000 pass 4 recheck 2/2
+    78.20 [   77.113s] ERROR thread 2 cycle 18 (total 41) bits 0x00000000001c0000 pass late recheck 2/2
+    79.90 [   78.814s] ERROR thread 12 cycle 19 (total 42) bits 0x0022000000220000 pass 0 recheck 2/2
+    80.00 [   78.882s] ERROR thread 12 cycle 19 (total 43) bits 0x0014000000080000 pass 3 recheck 2/2
+    81.20 [     80.1s] cycles 318, coverage 2025.5%, 50.14 GB/s, errors 43
+    81.30 [   80.215s] ERROR thread 8 cycle 20 (total 44) bits 0x0000000000060000 pass 0 recheck 2/2
+    81.91 [   80.760s] ERROR thread 5 cycle 20 (total 45) bits 0x0002000000040000 pass 0 recheck 2/2
+    82.01 [   80.894s] ERROR thread 15 cycle 20 (total 46) bits 0x0000000000060000 pass 3 recheck 2/2
+    82.51 [   81.417s] ERROR thread 5 cycle 20 (total 47) bits 0x0000000000060000 pass 0 recheck 2/2
+    82.61 [   81.450s] ERROR thread 2 cycle 20 (total 48) bits 0x0000000000280000 pass 0 recheck 2/2
+    82.71 [   81.601s] ERROR thread 2 cycle 20 (total 49) bits 0x0000000000090000 pass 3 recheck 2/2
+    83.71 [   82.628s] ERROR thread 2 cycle 20 (total 50) bits 0x0000000000060000 pass 0 recheck 2/2
+    84.41 [   83.283s] ERROR thread 15 cycle 21 (total 51) bits 0x0000000000c80000 pass 3 recheck 2/2
+    84.91 [   83.760s] ERROR thread 3 cycle 21 (total 52) bits 0x0021000000100000 pass 0 recheck 2/2
+    85.21 [   84.092s] ERROR thread 2 cycle 21 (total 53) bits 0x0000000000500000 pass 0 recheck 2/2
+    85.41 [   84.303s] ERROR thread 8 cycle 21 (total 54) bits 0x0002000000200000 pass 4 recheck 2/2
+    86.01 [   84.848s] ERROR thread 7 cycle 21 (total 55) bits 0x0000000000050000 pass 0 recheck 2/2
+    86.01 [   84.855s] ERROR thread 15 cycle 21 (total 56) bits 0x0080000000800000 pass 1 recheck 2/2
+    89.51 [   88.425s] ERROR thread 13 cycle 22 (total 57) bits 0x0020000000400000 pass 0 recheck 2/2
+    90.22 [   89.127s] ERROR thread 10 cycle 22 (total 58) bits 0x0040000000400000 pass 0 recheck 2/2
+    90.32 [   89.216s] ERROR thread 2 cycle 22 (total 59) bits 0x00000000001c0000 pass 3 recheck 2/2
+    90.92 [   89.790s] ERROR thread 2 cycle 22 (total 60) bits 0x0000000000280000 pass 0 recheck 2/2
+    91.02 [   89.865s] ERROR thread 2 cycle 22 (total 61) bits 0x0000000000860000 pass 3 recheck 2/2
+    91.22 [     90.2s] cycles 353, coverage 2277.2%, 49.98 GB/s, errors 61
+    91.42 [   90.289s] ERROR thread 7 cycle 22 (total 62) bits 0x0080000000800000 pass 0 recheck 2/2
+    92.12 [   90.989s] ERROR thread 11 cycle 23 (total 63) bits 0x0018000000040000 pass 1 recheck 2/2
+    92.52 [   91.421s] ERROR thread 15 cycle 23 (total 64) bits 0x0000000000c80000 pass 2 recheck 2/2
+    92.92 [   91.759s] ERROR thread 11 cycle 23 (total 65) bits 0x00000000001c0000 pass 0 recheck 2/2
+    93.22 [   92.102s] ERROR thread 0 cycle 23 (total 66) bits 0x00a0000000000000 pass 0 recheck 2/2
+    93.93 [   92.780s] ERROR thread 7 cycle 23 (total 67) bits 0x0002000000040000 pass 0 recheck 2/2
+    94.03 [   92.873s] ERROR thread 12 cycle 23 (total 68) bits 0x0000000000830000 pass 0 recheck 2/2
+    94.73 [   93.577s] ERROR thread 2 cycle 23 (total 69) bits 0x00000000003c0000 pass 1 recheck 2/2
+    94.73 [   93.599s] ERROR thread 3 cycle 23 (total 70) bits 0x0000000000440000 pass 0 recheck 2/2
+    95.03 [   93.946s] ERROR thread 14 cycle 23 (total 71) bits 0x0024000000000000 pass 4 recheck 2/2
+    95.33 [   94.261s] ERROR thread 7 cycle 23 (total 72) bits 0x0000000000390000 pass 0 recheck 2/2
+    96.03 [   94.951s] ERROR thread 15 cycle 23 (total 73) bits 0x0000000000c80000 pass late recheck 2/2
+    96.73 [   95.660s] ERROR thread 10 cycle 23 (total 74) bits 0x0000000000440000 pass 0 recheck 2/2
+    96.83 [   95.698s] ERROR thread 12 cycle 23 (total 75) bits 0x0002000000100000 pass late recheck 2/2
+    96.83 [   95.747s] ERROR thread 3 cycle 24 (total 76) bits 0x0014000000080000 pass 0 recheck 2/2
+    98.33 [   97.199s] ERROR thread 3 cycle 24 (total 77) bits 0x0000000000440000 pass 1 recheck 2/2
+    98.54 [   97.402s] ERROR thread 2 cycle 24 (total 78) bits 0x00000000001c0000 pass 3 recheck 2/2
+    98.54 [   97.458s] ERROR thread 3 cycle 24 (total 79) bits 0x0000000000440000 pass 2 recheck 2/2
+    98.74 [   97.617s] ERROR thread 13 cycle 24 (total 80) bits 0x0040000000000000 pass 0 recheck 2/2
+    99.64 [   98.502s] ERROR thread 2 cycle 24 (total 81) bits 0x00000000001c0000 pass 2 recheck 2/2
+    99.74 [   98.667s] ERROR thread 14 cycle 24 (total 82) bits 0x0008000000080000 pass 0 recheck 2/2
+   101.24 [  100.133s] ERROR thread 0 cycle 24 (total 83) bits 0x0020000000080000 pass late recheck 2/2
+   101.24 [    100.2s] cycles 399, coverage 2529.8%, 50.01 GB/s, errors 83
+   101.94 [  100.786s] ERROR thread 3 cycle 25 (total 84) bits 0x0000000000410000 pass 2 recheck 2/2
+   102.64 [  101.530s] ERROR thread 1 cycle 25 (total 85) bits 0x0000000000840000 pass 0 recheck 2/2
+   102.85 [  101.729s] ERROR thread 2 cycle 25 (total 86) bits 0x00000000001c0000 pass 1 recheck 2/2
+   102.95 [  101.821s] ERROR thread 5 cycle 25 (total 87) bits 0x00c0000000080000 pass 3 recheck 2/2
+   103.25 [  102.171s] ERROR thread 0 cycle 25 (total 88) bits 0x0000000000420000 pass 0 recheck 2/2
+   103.95 [  102.854s] ERROR thread 15 cycle 26 (total 89) bits 0x0000000000a00000 pass 2 recheck 2/2
+   104.85 [  103.754s] ERROR thread 5 cycle 26 (total 90) bits 0x0040000000040000 pass 1 recheck 2/2
+   105.75 [  104.609s] ERROR thread 3 cycle 26 (total 91) bits 0x00010000008b0000 pass 0 recheck 2/2
+   106.05 [  104.936s] ERROR thread 2 cycle 26 (total 92) bits 0x00000000001c0000 pass 4 recheck 2/2
+   106.05 [  104.957s] ERROR thread 12 cycle 26 (total 93) bits 0x0018000000180000 pass 0 recheck 2/2
+   106.25 [  105.108s] ERROR thread 2 cycle 26 (total 94) bits 0x0000000000310000 pass 0 recheck 2/2
+   106.65 [  105.496s] ERROR thread 3 cycle 26 (total 95) bits 0x0010000000400000 pass 4 recheck 2/2
+   107.96 [  106.851s] ERROR thread 4 cycle 26 (total 96) bits 0x0014000000080000 pass late recheck 2/2
+   108.16 [  107.043s] ERROR thread 11 cycle 27 (total 97) bits 0x0081000000020000 pass 2 recheck 2/2
+   108.26 [  107.149s] ERROR thread 15 cycle 27 (total 98) bits 0x0000000000280000 pass 0 recheck 2/2
+   108.56 [  107.482s] ERROR thread 5 cycle 27 (total 99) bits 0x0000000000410000 pass 0 recheck 2/2
+   108.66 [  107.590s] ERROR thread 15 cycle 27 (total 100) bits 0x0000000000c80000 pass 4 recheck 2/2
+   109.46 [  108.388s] ERROR thread 10 cycle 27 (total 101) bits 0x0014000000080000 pass 0 recheck 2/2
+   109.66 [  108.542s] ERROR thread 1 cycle 27 (total 102) bits 0x0024000000000000 pass 0 recheck 2/2
+   109.86 [  108.750s] ERROR thread 2 cycle 27 (total 103) bits 0x00000000001c0000 pass 4 recheck 2/2
+   110.06 [  108.947s] ERROR thread 2 cycle 27 (total 104) bits 0x0000000000280000 pass 0 recheck 2/2
+   111.06 [  109.965s] ERROR thread 5 cycle 27 (total 105) bits 0x0048000000800000 pass 0 recheck 2/2
+   111.16 [  110.023s] ERROR thread 5 cycle 27 (total 106) bits 0x000a000000000000 pass 1 recheck 2/2
+   111.26 [    110.2s] cycles 434, coverage 2782.0%, 50.02 GB/s, errors 106
+   111.56 [  110.430s] ERROR thread 1 cycle 27 (total 107) bits 0x0014000000080000 pass 0 recheck 2/2
+   112.36 [  111.246s] ERROR thread 3 cycle 28 (total 108) bits 0x0000000000900000 pass 3 recheck 2/2
+   113.06 [  111.928s] ERROR thread 5 cycle 28 (total 109) bits 0x0000000000410000 pass 0 recheck 2/2
+   113.56 [  112.490s] ERROR thread 0 cycle 28 (total 110) bits 0x0000000000600000 pass 1 recheck 2/2
+   113.66 [  112.505s] ERROR thread 3 cycle 28 (total 111) bits 0x0040000000020000 pass 0 recheck 2/2
+   113.86 [  112.717s] ERROR thread 8 cycle 28 (total 112) bits 0x0000000000220000 pass 0 recheck 2/2
+   114.27 [  113.115s] ERROR thread 3 cycle 27 (total 113) bits 0x0000000000440000 pass late recheck 2/2
+   114.27 [  113.120s] ERROR thread 15 cycle 28 (total 114) bits 0x000a000000000000 pass 0 recheck 2/2
+   114.37 [  113.217s] ERROR thread 2 cycle 28 (total 115) bits 0x0000000000310000 pass 0 recheck 2/2
+   114.37 [  113.258s] ERROR thread 2 cycle 28 (total 116) bits 0x0000000000a00000 pass 4 recheck 2/2
+   115.07 [  113.946s] ERROR thread 7 cycle 28 (total 117) bits 0x0030000000010000 pass 0 recheck 2/2
+   115.47 [  114.395s] ERROR thread 15 cycle 29 (total 118) bits 0x0088000000400000 pass 1 recheck 2/2
+   116.27 [  115.168s] ERROR thread 15 cycle 29 (total 119) bits 0x0000000000280000 pass 1 recheck 2/2
+   116.97 [  115.844s] ERROR thread 5 cycle 29 (total 120) bits 0x0000000000410000 pass 0 recheck 2/2
+   117.37 [  116.288s] ERROR thread 15 cycle 29 (total 121) bits 0x0060000000000000 pass 0 recheck 2/2
+   117.97 [  116.845s] ERROR thread 2 cycle 28 (total 122) bits 0x0000000000310000 pass late recheck 2/2
+   118.57 [  117.434s] ERROR thread 2 cycle 29 (total 123) bits 0x0000000000280000 pass 4 recheck 2/2
+   119.48 [  118.411s] ERROR thread 14 cycle 28 (total 124) bits 0x0024000000000000 pass late recheck 2/2
+   119.58 [  118.486s] ERROR thread 15 cycle 29 (total 125) bits 0x00c0000000080000 pass late recheck 2/2
+   120.18 [  119.098s] ERROR thread 15 cycle 29 (total 126) bits 0x0000000000c80000 pass late recheck 2/2
+   120.28 [  119.166s] ERROR thread 12 cycle 30 (total 127) bits 0x0084000000000000 pass 0 recheck 2/2
+   120.38 [  119.276s] ERROR thread 10 cycle 29 (total 128) bits 0x0000000000410000 pass 1 recheck 2/2
+   121.18 [    120.0s] cycles 479, coverage 3030.0%, 50.05 GB/s, errors 128
+   121.18 RESULT tester=memslammer errors=128 first_error_s=6.668 elapsed_s=120.036

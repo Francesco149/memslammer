@@ -1,0 +1,28 @@
+# /root/msbench/memslammer -m 13815 -d 900.0 -s -M verify
+     0.10 memslammer verify: 13440 MB, 24 threads, block 16777216, rereads 200, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
+    10.62 [     10.0s] cycles 0, coverage 17.5%, 54.39 GB/s, errors 0
+    20.64 [     20.0s] cycles 0, coverage 36.9%, 55.16 GB/s, errors 0
+    30.66 [     30.0s] cycles 0, coverage 57.0%, 55.53 GB/s, errors 0
+    40.68 [     40.1s] cycles 0, coverage 76.9%, 55.69 GB/s, errors 0
+    50.70 [     50.1s] cycles 6, coverage 96.5%, 55.80 GB/s, errors 0
+    60.72 [     60.1s] cycles 24, coverage 116.0%, 56.07 GB/s, errors 0
+    70.74 [     70.1s] cycles 24, coverage 135.7%, 55.61 GB/s, errors 0
+    80.76 [     80.1s] cycles 24, coverage 155.6%, 55.99 GB/s, errors 0
+    90.78 [     90.2s] cycles 24, coverage 175.0%, 56.07 GB/s, errors 0
+   100.80 [    100.2s] cycles 30, coverage 194.9%, 55.94 GB/s, errors 0
+   110.82 [    110.2s] cycles 48, coverage 214.5%, 55.77 GB/s, errors 0
+   120.84 [    120.2s] cycles 48, coverage 234.4%, 56.20 GB/s, errors 0
+   130.86 [    130.2s] cycles 48, coverage 253.9%, 55.80 GB/s, errors 0
+   140.88 [    140.3s] cycles 48, coverage 273.6%, 56.02 GB/s, errors 0
+   150.90 [    150.3s] cycles 54, coverage 293.2%, 56.00 GB/s, errors 0
+   160.92 [    160.3s] cycles 68, coverage 313.0%, 55.84 GB/s, errors 0
+   170.94 [    170.3s] cycles 72, coverage 332.7%, 56.13 GB/s, errors 0
+   180.96 [    180.3s] cycles 72, coverage 352.6%, 56.21 GB/s, errors 0
+   190.98 [    190.4s] cycles 74, coverage 372.6%, 56.40 GB/s, errors 0
+   201.00 [    200.4s] cycles 78, coverage 392.5%, 55.90 GB/s, errors 0
+   211.02 [    210.4s] cycles 88, coverage 411.8%, 56.18 GB/s, errors 0
+   221.04 [    220.4s] cycles 96, coverage 431.7%, 56.39 GB/s, errors 0
+   231.06 [    230.4s] cycles 96, coverage 451.9%, 56.32 GB/s, errors 0
+   236.47 [    235.8s] cycles 97, coverage 462.3%, 56.19 GB/s, errors 1
+   236.47 [  235.809s] ERROR thread 1 cycle 4 (total 1) bits 0x0000000000008000 pass 176 recheck 0/2
+   236.49 RESULT tester=memslammer errors=1 first_error_s=235.809 elapsed_s=235.837

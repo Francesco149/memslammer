@@ -366,8 +366,8 @@ The user reverted only tWR (label `... rrdl12 wr90 rtp16`) and rebooted.
   00 00 [ff→bf] 00 00 00`: a lone `ff` among zeros came back as `bf`. The
   same flips from the same data on two boots means the fault depends on the
   data pattern. The boot also logged 9 `Invalid ELF header magic` (rejected
-  kernel modules), which may or may not be corruption; there's no clean
-  boot log to compare with yet.
+  kernel modules); those turned out to be on every boot (see "tRRDL 12
+  alone").
 - Same cold protocol as the tWR 60 run. Errors per minute, minutes 0–7:
   tWR 60: 0, 2, 1, 7, 22, 59, 69; **tWR 90: 0, 1, 2, 15, 17, 29, 52**. First
   error at 69 s (tWR 60: 61 s). All 123 in lane 2, all `recheck 2/2`, 27%
@@ -388,10 +388,11 @@ The user reverted only tWR (label `... rrdl12 wr90 rtp16`) and rebooted.
 ### Full EXPO again
 
 The user went back to EXPO (tRTP 23, tRRDL 15, tWR 90). Every UMC register
-read the same as in the original baseline run. The boot logged nothing: no
-`Bad page state` and no `Invalid ELF header magic`, so the 9 rejected
-modules on the unstable boot were most likely corruption too. Same cold
-protocol, with the sampler streamed to the harness host.
+read the same as in the original baseline run. The boot logged no
+`Bad page state`. (It also seemed to log no `Invalid ELF header magic`, which
+we took as a sign that those 9 messages were corruption. They aren't: see
+the correction under "tRRDL 12 alone".) Same cold protocol, with the sampler
+streamed to the harness host.
 
 - **0 errors in 600 s**, with the DIMMs going 33.6 → 52 °C, about the same
   path as the unstable runs. The tWR 60 run's rates, applied to the time
@@ -440,9 +441,8 @@ cold protocol, sampler streamed to the harness host (record
 - Same signature as before: every error in byte lane 2 (bytes 2 and 6 of
   the word), all 8 DQs, mostly 2–3 bits; all 680 `recheck 2/2`; 25% caught
   on pass 0–1.
-- The boot logged the same 9 `Invalid ELF header magic` as the tRRDL 12 +
-  tRTP 16 boot, and no `Bad page state`. The EXPO boot logged neither. No
-  MCE or kernel BUG during the run.
+- The boot logged no `Bad page state`, and no MCE or kernel BUG during the
+  run.
 - tRTP is the minimum time from a read to a precharge in the same bank.
   That fits the fill-phase result: the fill's reads for ownership arrive
   out of order, so many are followed soon by a precharge to open another
@@ -500,7 +500,132 @@ baseline. Seconds to first error:
 - 3 of the 4 boots with tRTP 16 whose logs we checked (one also with
   tRRDL 12) logged one or two `Bad page state` reports before anything ran, all lane-2 flips in `struct page` fields (`mapping`
   0x20000 / 0x830000, `index` 0x800000, `mapcount` 0xfffeffff,
-  `memcg_data` 0x280000). All 4 logged the 9 `Invalid ELF header magic`.
+  `memcg_data` 0x280000).
+
+### tRRDL 12 alone
+
+The last leg of the bisect: EXPO with only tRRDL lowered, 15→12 (label
+`7800X3D 6000 c30 rcd36 rp36 ras76 rrdl12`; `memtimings` read tRRDL 12,
+tWR 90, tRTP 23). Same cold run as the others, 10 min of default `verify`,
+this time in stop-at-first-error mode so that a failure wouldn't corrupt the
+box (record `20261110-014517-c92c`).
+
+- **0 errors in 600 s**, DIMMs 35.3 → 54.1 °C. That is slightly hotter than
+  the tRTP 16 run, which logged 680 errors on the same path, and the same
+  result as full EXPO.
+- **0 errors in a further 300 s of `-r 20`**, started right after with the
+  DIMMs at 54–55 °C (record `20261110-015521-2cbf`). On tRTP 16, `-r 20`
+  failed in 24–48 s from cold; warm, at 51–54 °C with all three timings
+  lowered, its first error came within 0.3 s.
+- **So tRTP 16 is the whole fault.** tRRDL 12 passes everything tRTP 16
+  fails, and tWR 60 made no difference on top of tRTP 16 (above). The
+  bisect is complete: of the three timings the user changed, only tRTP
+  needs to go back.
+- No `Bad page state` at boot or during the runs, no MCE, no oops. Another
+  30 min of hot runs with the new build followed (below), also without an
+  error: 45 min of testing on this setting in all.
+
+| setting (EXPO otherwise)        | 10 min cold, default `verify` | boot `Bad page state` |
+|---------------------------------|------------------------------:|-----------------------|
+| EXPO                            | 0 errors                      | none                  |
+| tRRDL 12                        | 0 errors                      | none                  |
+| tRTP 16                         | 680 errors, first at 139 s    | in 2 of 3 boots       |
+| tRRDL 12 + tRTP 16 + tWR 90     | 123 errors in 440 s, then a kernel panic | yes        |
+| tRRDL 12 + tRTP 16 + tWR 60     | 402 errors, first at 61 s     | not checked           |
+
+**Correction: `Invalid ELF header magic` is not a sign of corruption.** This
+boot logged the same 9 messages, at 3.97 s, in the same instant the Ventoy
+stick's partitions appear and device-mapper loads. They come from the boot
+path (most likely Ventoy's hook loading modules), on every boot. The full
+EXPO boot looked clean only because that check went through `journalctl`,
+which prints these lines as `[blob data]`: they contain a raw 0x7f byte.
+`dmesg` shows them. `Bad page state` remains a real sign.
+
+### What the pass numbers say about the tRTP fault
+
+The tRTP 16 logs record which re-read found each error (`pass`). Counting
+them per pass (2026-11-09 runs; "warm 2" is the second ablation round):
+
+| run                | errors | pass 0 | pass 1 | pass 2 | pass 3 | passes 8+ |
+|--------------------|-------:|-------:|-------:|-------:|-------:|----------:|
+| `-r 2`, warm 2     | 4544   | 3678   | 866    |        |        |           |
+| `-r 20`, warm 2    | 1310   | 570    | 94     | 72     | 69     | 330       |
+| `-r 20`, cold 10 min | 3937 | 1599   | 224    | 204    | 188    | 1089      |
+| `-r 200`, warm 2   | 143    | 58     | 3      | 3      | 2      | 68        |
+
+- **Two things corrupt a block.** Its own fill: pass 0, the first read
+  after it, finds 41–44% of the errors with 20 or 200 re-reads in these
+  runs (21% in the 10 min cold default run) and 81% with 2. And something
+  later: a block that read back correctly keeps failing on the passes
+  after that, with the stored data wrong each time (`recheck 2/2`).
+- **The later rate follows how much of the time the threads spend
+  filling.** Averaged over all later passes, one pass finds 0.7% of what
+  pass 0 finds with `-r 200`, 7% with `-r 20` and 22–24% with `-r 2`. The
+  threads spend about 1%, 9% and 50% of their time filling. The ratio of
+  the two is 0.74–0.79 in all four `-r 200` and `-r 20` warm runs (0.45 for
+  `-r 2`, which also moves a third less data). So a block being re-read
+  while others fill is at about the same risk, per unit of time, as a block
+  being filled.
+- **Memory that is only sitting there is far safer.** In the warm `-r 20`
+  run the 16 blocks under re-read took 740 such errors in 90 s, about one
+  per block every 2 s. If the 1700 idle blocks and the kernel's own memory
+  failed at that rate, the box would not last a second. It lasts minutes.
+  So what gets corrupted is memory in use (being read, or just written)
+  while fills are going on.
+- That fits tRTP, the time from a read to the precharge that closes its
+  row. Sequential re-reads rarely force a row closed right after reading
+  it. Fills do: each adds a read-for-ownership stream and a write-back
+  stream a few MB behind it, so the controller keeps closing rows to open
+  others in the same bank. It leaves one thing open: a fill's own reads
+  are of lines it is about to overwrite, so they shouldn't leave a
+  trace, yet pass 0 finds the most. `-N` (below) fills without those
+  reads, and the late check watches the idle blocks; both are there to
+  settle this on the next tRTP 16 boot.
+
+### New in the tester: late check, non-temporal fill
+
+- **Late check (on by default, `-L` turns it off).** Until now `verify`
+  never looked at a block again after its re-reads: a block was filled,
+  read 200 times within ~0.7 s, and then sat for a whole cycle (70 s here)
+  until the next fill overwrote it unseen. At any moment 99% of the memory
+  under test held data nobody would check. A row that is read every few ms
+  is also being refreshed by those reads, so a refresh or retention
+  problem (tREFI too long, for one) could not show at all. Now each block
+  is compared once more just before its next fill, as TM5's RefreshStable
+  does around its tests ([tm5.md](tm5.md)). Such errors print `pass late`.
+  A block that already failed a re-read isn't reported a second time.
+- **`-N` fills with non-temporal stores** (experimental): no read for
+  ownership, and the block isn't left in cache. It's there to find out
+  what in the fill triggers the tRTP fault.
+- The self-test flips a bit in every block while the threads are busy
+  elsewhere: with the late check 14–15 of 16 blocks are caught (the others
+  were being filled at that moment), without it none.
+
+Neither could be measured against a fault today: the box was on tRRDL 12,
+which is stable. What could be checked there, right after the runs above,
+DIMMs at 54–57 °C, 60–120 s each:
+
+| config                       | GB/s | fills of the whole memory per min | errors |
+|------------------------------|-----:|----------------------------------:|-------:|
+| default                      | 82.4 | 0.86                              | 0      |
+| default, `-L`                | 82.4 | 0.86                              | 0      |
+| `-r 20`, before the change   | 75.0 | 7.5                               | 0      |
+| `-r 20`                      | 75.4 | 7.2                               | 0      |
+| `-r 20 -N`                   | 80.2 | 7.7                               | 0      |
+| `-r 2`                       | 52.3 | 27.7                              | 0      |
+| `-r 2 -N`                    | 63.9 | 33.9                              | 0      |
+| `chain`                      | 66.0 | 4.0 cycles, each with 9 writes of the memory | 0 |
+
+- **The late check costs nothing at the default** (one extra read per 201)
+  and 4% of the fills at `-r 20`. No false errors on real hardware: 10 min
+  across these variants, then a 20 min `-r 20` soak with the DIMMs at
+  46–57 °C (record `20261110-021413-79d9`: 144 fills of the whole memory,
+  every block late-checked each time).
+- Both were then measured on tRTP 16: see
+  [the race below](#the-race-on-trtp-16-re-reads-order-and-fill).
+- **The late check still needs a retention fault to prove itself there**,
+  which neither box has shown yet: tREFI raised until it fails with the
+  DIMMs hot would be one.
 
 ### Harness fixes from this round
 
@@ -515,3 +640,154 @@ baseline. Seconds to first error:
   steps the clock back later. So early-boot messages are stamped an hour
   ahead, and `--since` counted the boot's own `Bad page state` as a new
   event during the first hour. It now filters on time since boot.
+- `bench.py run` gained `--gate-dimm C` (wait until every DIMM reads ≤ C)
+  and `--sample` (stream the 1 Hz temperature log to
+  `results/samples/<run id>.tsv`), and records the DIMM temperatures at the
+  start and end of each run. Until now that was done by hand around each
+  run.
+
+### The race on tRTP 16: re-reads, order and fill
+
+2026-11-10, EXPO + tRTP 16 again (`rtp=16 rrdl=15 wr=90` read back), the
+binary with the late check, one boot of 12 h. The boot logged one lane-2
+`Bad page state` before anything ran.
+
+**First error, from cold.** 3 rotated rounds, stop at the first error, 60 s
+idle after the gate. The idle DIMMs sat at 35.25–36.5 °C today and never
+reached the 35 °C gate, so round 1 waited its 20 min cap every time; rounds
+2–3 used 36 °C. `-r 2 -N` joined in round 2. The last column is the first
+error of the 120 s `--rate` runs below, same start. Seconds:
+
+| config              | round 1 | round 2 | round 3 | rate runs  | median |
+|---------------------|--------:|--------:|--------:|-----------:|-------:|
+| `-r 2 -A shuffle`   |         |         |         | 5.0        | 5.0    |
+| `-r 5 -A shuffle`   |         |         |         | 6.7        | 6.7    |
+| `-r 2`              | 4.1     | 20.6    | 7.4     | 7.5, 15.1  | **7.5**|
+| `-r 20 -A shuffle`  | 26.9    | 20.7    | 4.3     | 2.4        | 12.5   |
+| `-r 2 -N`           |         | 17.4    | 10.4    | 26.4       | 17.4   |
+| `-r 1`              |         |         |         | 23.7       | 23.7   |
+| `chain`             | 41.3    | 27.8    | 14.1    |            | 27.8   |
+| `-r 20 -N`          | 30.9    | 69.8    | 38.6    | 38.7       | 38.7   |
+| `-r 20`             | 42.0    | 42.3    | 14.6    | 37.5       | 39.8   |
+
+Start DIMM temperature (mean of the two) was 35.0–35.75 °C in round 1 and
+35.75–36.5 °C after. First errors came at 36.3–42.4 °C. No kernel events in
+any of the 17 stop-at-first-error runs.
+
+**Error rate, from cold.** 120 s `--rate` each, gate 36.5 °C, every run
+from 36.1–36.25 °C to 44.9–46.1 °C. All 863 errors were `recheck 2/2` and
+in byte lane 2. "Fills" is how many times the whole memory was written.
+
+| config              | GB/s | fills | errors | first read after the fill | later re-reads | late check |
+|---------------------|-----:|------:|-------:|-----:|------:|-----:|
+| `-r 2 -A shuffle`   | 46.7 | 49    | 205    | 134  | 37    | 34   |
+| `-r 2`              | 52.3 | 55    | 137    | 72   | 19    | 46   |
+| `-r 2`, 1.5 h later | 52.3 | 55    | 91     | 55   | 9     | 27   |
+| `-r 1`              | 48.0 | 68    | 133    | 85   | –     | 48   |
+| `-r 5 -A shuffle`   | 50.1 | 30    | 128    | 65   | 48    | 15   |
+| `-r 20 -A shuffle`  | 53.8 | 10    | 84     | 16   | 62    | 6    |
+| `-r 20`             | 75.3 | 14    | 33     | 15   | 11    | 7    |
+| `-r 2 -N`           | 63.7 | 67    | 28     | 9    | 6     | 13   |
+| `-r 20 -N`          | 80.0 | 15    | 24     | 0    | 16    | 8    |
+
+- **Fewer re-reads per fill find this fault sooner, all the way down.**
+  `-r 2`: median 7.5 s over 5 runs (4–21). `-r 20`: 39.8 s over 4 (15–42).
+  The default took 96–139 s yesterday (median 118, older binary, DIMMs
+  about 1 °C cooler at the start). `-r 2` found 2.8–4.2x the errors of
+  `-r 20` in 120 s. Errors found by the first read after a fill stay at
+  1.0–1.3 per fill of the memory for `-r 1`, `-r 2` and `-r 20`: the fills
+  do it, and `-r 2` makes four times as many.
+- **`-r 1` is no better than `-r 2`**: 133 errors against 137 and 91.
+- **Shuffled re-reads help here**, unlike on DDR4. At `-r 20` they found
+  5.6x the later-pass errors (62 against 11) and 2.5x the total, at 71% of
+  the bandwidth. With `-r 2` the total was 205 against 137 and 91. Its
+  first errors were also the earliest, but that is one run per shuffled
+  `-r 2`/`-r 5` config.
+- **The non-temporal fill is worse for this fault.** It moves more data
+  (22% more fills at `-r 2`) and the first read after a fill found 9 errors
+  in 82 fills, against 87 in 69 for the normal fill at the same settings:
+  0.11 per fill against 1.26. At `-r 20` it found none at all. `-N` stays
+  an option; the normal fill stays the default.
+- **That answers yesterday's open point.** The normal fill reads each line
+  before overwriting it (read for ownership) and writes it back later; the
+  non-temporal fill only writes. The reads are what the fill needs to
+  corrupt data, which is what a short tRTP should do: the row is closed
+  too soon after a read. The memory is in 2 MiB pages here, so the lines
+  around the one being read, in the same DRAM row, belong to the same
+  block and were written a moment earlier. Our reading, not something
+  these runs show directly: a read closed too early costs other cells in
+  its row their charge. Shuffled re-reads, which jump to another row after
+  every 4 KiB, fit that too.
+- **The late check found 7–46% of the errors of every run** (21% at
+  `-r 20`, 30–34% at `-r 2`, 36% at `-r 1`). Before it, those blocks were
+  overwritten unseen. Part of that is damage done by the last re-read
+  itself; the rest happened while the block sat untouched. `-r 2` puts a
+  bound on it: its second read found 19 and 9 errors, and the late check
+  46 and 27, so more than half the late errors arrived while the block was
+  idle.
+- **Run-to-run spread is about ±25%**: the two `-r 2` runs gave 137 and 91
+  errors from the same start. Differences below 1.5x in the table are not
+  established.
+- **`chain` is no faster than `-r 20`** (median 27.8 s against 39.8 s, 3
+  runs, ranges overlap). It only checks at the end of a cycle, 14 s apart.
+- Round 3 was the fastest round for three of the five configs. The room
+  warmed through the morning (starts went from 35.0 to 36.5 °C), so
+  compare within a round. `-r 2` beat `-r 20` in all three.
+- The fifth `--rate` run (`-r 20 -A shuffle`) logged one more lane-2 `Bad
+  page state` (`memcg_data` 0x6000000000000). The four runs after it, on
+  the same boot, logged nothing and the box stayed reachable.
+- On the DDR4 box `-r 20` and `-A shuffle` had made no measurable
+  difference to a read-side fault, and `-r 2` had not been run there. That
+  run is [the next section](#2026-11-10-re-read-count-on-the-ddr4-box-5-min-idle).
+
+## 2026-11-10: re-read count on the DDR4 box, 5 min idle
+
+The 5900X box on its usual target (`3600 c14 rcd14 rp16 ras36 rfc324` read
+back), booted from our live USB, on Wi-Fi, the same binary as the tRTP race
+above. Standard protocol: 5 min idle before every run, stop at the first
+error, 90% of free RAM (13.8 GB). 4 rounds, order rotated so every config
+ran once in each slot. All 16 runs failed. Seconds:
+
+| config             | round 1 | round 2 | round 3 | round 4 | median  | range   | GB/s | end Tctl (°C) |
+|--------------------|--------:|--------:|--------:|--------:|--------:|---------|-----:|--------------:|
+| `-r 20`            | 97      | 113     | 111     | 181     | **112** | 97–181  | 50.7 | 78–81         |
+| `-r 2 -A shuffle`  | 106     | 75      | 240     | 166     | 136     | 75–240  | 31.6 | 73–77         |
+| `-r 2`             | 211     | 68      | 176     | 230     | 194     | 68–230  | 36.0 | 76–79         |
+| default (`-r 200`) | 209     | 222     | 160     | 236     | 216     | 160–236 | 56.0 | 78–82         |
+
+- **`-r 20` beat the default in all four rounds**, median 112 s against
+  216 s. One of the 16 cross pairs goes the other way (181 s against
+  160 s); with equal configs a split that lopsided comes up about 1 time in
+  35. On 2026-11-07 the same pair gave 115, 122, 56 s against 236, 55,
+  113 s (4 MiB blocks then). So `-r 20` has now been the faster or equal
+  one in both batches, where we had expected a read-side fault to prefer
+  more re-reads.
+- **`-r 2` is not better than the default here** (median 194 s against
+  216 s, ranges on top of each other) and lost to `-r 20` in three rounds
+  of four. It moves 36 GB/s against 51 and 56, a quarter of it writes, and
+  heats the CPU less. On the tRTP fault it was 5x faster than `-r 20`; on
+  this one it gives that back.
+- **Shuffled order at `-r 2` shows nothing either way**: 75–240 s.
+- **Every first error was the same bit, `0x8000`, and `recheck 0/2`**: the
+  stored data was right and one read of it was wrong. That is the opposite
+  of the DDR5 fault (`2/2` in all of today's 863 rate-run errors), so
+  writing more often can't help by itself. Why `-r 20` still beats the
+  default here is not explained by these runs.
+- Two of `-r 2`'s first errors were caught by the late check, also `0/2`:
+  a bad read during the late check itself, not data that decayed.
+- Start Tctl was 45–46 °C through run 9 and 39–41 °C from run 10 on (the
+  room cooled in the evening). Five of the seven later runs were slower
+  than all of their config's earlier ones; the rotation spreads that over
+  the configs.
+- No machine-check or oops messages in any run.
+
+Taken together with the DDR5 box:
+
+| fault                                   | default | `-r 20` | `-r 2`  |
+|-----------------------------------------|--------:|--------:|--------:|
+| DDR5, tRTP 16: stored data corrupted    | 118 s   | 40 s    | 7.5 s   |
+| DDR4, tCL/tRCD 14: bad reads            | 216 s   | 112 s   | 194 s   |
+
+(medians; the DDR5 default is from the day before.) `-r 20` is faster than
+the default on both faults. `-r 2` is much the fastest on one and no
+better than the default on the other.

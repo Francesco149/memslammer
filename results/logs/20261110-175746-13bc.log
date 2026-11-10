@@ -1,0 +1,28 @@
+# /root/msbench/memslammer -m 13811 -d 900.0 -s -M verify -r 2 -A shuffle
+     0.10 memslammer verify: 13440 MB, 24 threads, block 16777216, rereads 2, pattern random, cache none, order shuffle, heat 0, yield 1, late 1, fill store
+    10.72 [     10.1s] cycles 120, coverage 578.2%, 30.95 GB/s, errors 0
+    20.74 [     20.1s] cycles 264, coverage 1139.4%, 31.58 GB/s, errors 0
+    30.75 [     30.1s] cycles 399, coverage 1700.0%, 31.57 GB/s, errors 0
+    40.77 [     40.1s] cycles 528, coverage 2262.1%, 31.63 GB/s, errors 0
+    50.78 [     50.2s] cycles 672, coverage 2823.2%, 31.59 GB/s, errors 0
+    60.80 [     60.2s] cycles 794, coverage 3385.4%, 31.62 GB/s, errors 0
+    70.81 [     70.2s] cycles 936, coverage 3946.2%, 31.59 GB/s, errors 0
+    80.83 [     80.2s] cycles 1074, coverage 4507.7%, 31.60 GB/s, errors 0
+    90.85 [     90.2s] cycles 1200, coverage 5069.6%, 31.62 GB/s, errors 0
+   100.87 [    100.2s] cycles 1344, coverage 5630.6%, 31.57 GB/s, errors 0
+   110.88 [    110.3s] cycles 1474, coverage 6192.1%, 31.61 GB/s, errors 0
+   120.89 [    120.3s] cycles 1608, coverage 6753.7%, 31.60 GB/s, errors 0
+   130.91 [    130.3s] cycles 1746, coverage 7314.6%, 31.58 GB/s, errors 0
+   140.92 [    140.3s] cycles 1875, coverage 7875.1%, 31.54 GB/s, errors 0
+   150.94 [    150.3s] cycles 2015, coverage 8436.3%, 31.60 GB/s, errors 0
+   160.95 [    160.3s] cycles 2149, coverage 8997.3%, 31.57 GB/s, errors 0
+   170.97 [    170.3s] cycles 2281, coverage 9557.6%, 31.55 GB/s, errors 0
+   180.99 [    180.4s] cycles 2416, coverage 10119.0%, 31.59 GB/s, errors 0
+   191.00 [    190.4s] cycles 2550, coverage 10680.2%, 31.59 GB/s, errors 0
+   201.02 [    200.4s] cycles 2687, coverage 11241.5%, 31.59 GB/s, errors 0
+   211.03 [    210.4s] cycles 2824, coverage 11802.6%, 31.58 GB/s, errors 0
+   221.05 [    220.4s] cycles 2954, coverage 12364.2%, 31.61 GB/s, errors 0
+   231.06 [    230.4s] cycles 3088, coverage 12926.3%, 31.65 GB/s, errors 0
+   240.68 [  240.023s] ERROR thread 1 cycle 134 (total 1) bits 0x0000000000008000 pass 1 recheck 0/2
+   240.77 [    240.1s] cycles 3219, coverage 13464.8%, 31.54 GB/s, errors 1
+   240.77 RESULT tester=memslammer errors=1 first_error_s=240.023 elapsed_s=240.062

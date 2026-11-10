@@ -1,0 +1,14 @@
+# /root/msbench/memslammer -m 13826 -d 900.0 -s -M verify -r 20
+     0.10 memslammer verify: 13824 MB, 24 threads, block 16777216, rereads 20, pattern random, cache none, order seq, heat 0, yield 1, late 1, fill store
+    10.72 [     10.1s] cycles 24, coverage 163.7%, 50.64 GB/s, errors 0
+    20.74 [     20.1s] cycles 72, coverage 322.6%, 50.72 GB/s, errors 0
+    30.75 [     30.1s] cycles 98, coverage 481.7%, 50.70 GB/s, errors 0
+    40.77 [     40.1s] cycles 146, coverage 640.6%, 50.61 GB/s, errors 0
+    50.79 [     50.2s] cycles 181, coverage 799.7%, 50.70 GB/s, errors 0
+    60.81 [     60.2s] cycles 219, coverage 959.7%, 50.76 GB/s, errors 0
+    70.83 [     70.2s] cycles 258, coverage 1119.1%, 50.76 GB/s, errors 0
+    80.84 [     80.2s] cycles 294, coverage 1278.4%, 50.75 GB/s, errors 0
+    90.86 [     90.2s] cycles 334, coverage 1437.7%, 50.72 GB/s, errors 0
+    97.97 [   97.326s] ERROR thread 1 cycle 15 (total 1) bits 0x0000000000008000 pass 5 recheck 0/2
+    98.07 [     97.4s] cycles 363, coverage 1550.9%, 50.63 GB/s, errors 1
+    98.07 RESULT tester=memslammer errors=1 first_error_s=97.326 elapsed_s=97.351

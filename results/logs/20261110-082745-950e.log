@@ -1,0 +1,6 @@
+# /root/msbench/memslammer -m 27362 -d 600.0 -s -M chain
+     0.09 memslammer chain: 27362 MB, 16 threads, block 4096, passes 4, flush clflushopt, yield 1, ops 0xf
+    11.10 [     10.0s] cycles 0, coverage 0.0%, 0.00 GB/s, errors 0
+    15.21 [     14.1s] cycles 4, coverage 25.0%, 40.21 GB/s, errors 1
+    15.21 [   14.115s] ERROR thread 2 cycle 0 (total 1)
+    15.72 RESULT tester=memslammer errors=1 first_error_s=14.115 elapsed_s=14.585
